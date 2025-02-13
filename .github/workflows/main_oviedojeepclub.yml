@@ -68,9 +68,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.__clientidsecretname__ }}
-          tenant-id: ${{ secrets.__tenantidsecretname__ }}
-          subscription-id: ${{ secrets.__subscriptionidsecretname__ }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FFFBAAFB890A4D68A5BF0A27CED18640 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B8A218FAA42D4E3E899B49E247A0A289 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B6437C6F0D16423F82D126AF759159CC }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -78,3 +78,4 @@ jobs:
         with:
           app-name: 'oviedojeepclub'
           slot-name: 'Production'
+          
