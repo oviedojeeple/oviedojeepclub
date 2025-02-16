@@ -52,22 +52,11 @@ body {
     background-color: #999; /* Highlight active button */
 }
 
-.admin-only {
-    display: none;
-}
-
 #profile-section,
 #events-section,
-#admin-section {
-    display: none;
-    padding: 20px;
-}
 
 #profile-section.active,
 #events-section.active,
-#admin-section.active {
-    display: block;
-}
 
 .profile-pic {
     border-radius: 50%;
