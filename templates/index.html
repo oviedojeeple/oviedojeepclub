@@ -19,7 +19,6 @@
         <button id="menu-profile" class="nav-btn">Login</button>
         <!-- Events and Admin remain hidden until authentication -->
         <button id="menu-events" class="nav-btn" style="display: none;">Events</button>
-        <button id="menu-admin" class="nav-btn admin-only" style="display: none;">Admin</button>
     </nav>
 
     <main>
@@ -38,42 +37,14 @@
         <section id="events-section" class="content-section">
             <h2>Events</h2>
             <div id="events-section-content">
-                <div id="qr-code"></div>
                 <p>Events will appear here once you log in.</p>
             </div>
-        </section>
-
-        <section id="admin-section">
-            <h2>Admin</h2>
-            <form id="event-form">
-                <div class="form-group">
-                    <label for="event-title">Title:</label>
-                    <input type="text" id="event-title" name="event-title" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-venue">Venue:</label>
-                    <input type="text" id="event-venue" name="event-venue" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-date">Date:</label>
-                    <input type="datetime-local" id="event-date" name="event-date" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-fee">Fee:</label>
-                    <input type="number" id="event-fee" name="event-fee" required>
-                </div>
-                <div class="form-group">
-                    <label for="event-description">Description:</label>
-                    <textarea id="event-description" name="event-description" required></textarea>
-                </div>
-                <button type="submit">Create Event</button>
-            </form>
         </section>
     </main>
 
     <footer>
         <p>© 2025 Oviedo Jeep Club. All rights reserved.</p>
     </footer>
+    <script src="/static/scripts/profile.js"></script>
 </body>
-
 </html>
