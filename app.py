@@ -16,6 +16,7 @@ CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
 CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
 TENANT_ID = os.getenv("AZURE_TENANT_ID")
 REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI", "https://test.oviedojeepclub.com/auth/callback")
+AZURE_POLICY = os.getenv("AZURE_POLICY")
 SCOPES = ["User.Read"]
 AUTHORITY = f"https://oviedojeepclub.b2clogin.com/{AZURE_POLICY}"
 LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
