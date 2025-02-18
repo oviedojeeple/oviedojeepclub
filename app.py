@@ -15,9 +15,11 @@ api = Api(app)
 CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
 CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
 TENANT_ID = os.getenv("AZURE_TENANT_ID")
-AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI", "https://test.oviedojeepclub.com/auth/callback")
 SCOPES = ["User.Read"]
+AUTHORITY = f"https://oviedojeepclub.b2clogin.com/{AZURE_POLICY}"
+LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
+TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
 
 login_manager = LoginManager()
 login_manager.init_app(app)
