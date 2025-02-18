@@ -12,7 +12,17 @@ CORS(app)
 api = Api(app)
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("app.log"),  # Save logs to a file
+        logging.StreamHandler(sys.stdout)  # Send logs to console
+    ]
+)
+
 logger = logging.getLogger(__name__)
 logger.debug("Flask app has started.")
 
