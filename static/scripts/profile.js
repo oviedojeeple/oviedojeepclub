@@ -24,11 +24,11 @@ document.addEventListener('DOMContentLoaded', function () {
               if (menuEvents) {
                   menuEvents.style.display = "inline-block";
               }
+              showSection('profile');
           } else {
               menuProfile.textContent = "Login";
           }
       }
-      showSection('profile');
   });
 
   if (menuEvents) {
