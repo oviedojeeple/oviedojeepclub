@@ -1,56 +1,90 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
+from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from flask_restful import Resource, Api
 from flask_cors import CORS
-from functools import wraps
-from msal import ConfidentialClientApplication
-from io import BytesIO
-import os, json, time, requests, asyncio
-import logging
+import msal
+import os, time, requests, logging
 
 # Initialize Flask App
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Secure session key (random per restart)
 CORS(app)
 api = Api(app)
 
-# Configuration
-CACHE_TIMEOUT = int(os.getenv("CACHE_TIMEOUT", 300))
+# Azure Entra ID Config (Using Environment Variables)
+CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
+CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
+TENANT_ID = os.getenv("AZURE_TENANT_ID")
+AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI", "https://test.oviedojeepclub.com/auth/callback")
+SCOPES = ["User.Read"]
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-logger.debug("Flask app has started.")
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-# In-memory cache
-cache = {}
+class User(UserMixin):
+    def __init__(self, user_id, name, email):
+        self.id = user_id
+        self.name = name
+        self.email = email
 
-def get_cached_item(cache_key):
-    item = cache.get(cache_key)
-    if item and time.time() - item[1] < CACHE_TIMEOUT:
-        return item[0]
-    return None
-
-def set_cached_item(cache_key, item):
-    cache[cache_key] = (item, time.time())
-
-def error_response(message, status_code=400):
-    return jsonify({"error": message}), status_code
+@login_manager.user_loader
+def load_user(user_id):
+    return session.get("user")
 
 @app.route('/')
 def index():
-    logger.info("Request for index page received")
     return render_template('index.html')
 
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+@app.route('/login')
+def login():
+    session["flow"] = _build_auth_code_flow()
+    return redirect(session["flow"]["auth_uri"])
+
+@app.route('/auth/callback')
+def auth_callback():
+    if request.args.get("error"):
+        return f"Error: {request.args['error']} - {request.args.get('error_description')}"
+
+    result = _acquire_token_by_auth_code_flow(session.get("flow"), request.args)
+    if "access_token" in result:
+        user_info = _get_user_info(result["access_token"])
+        session["user"] = User(user_info["id"], user_info["displayName"], user_info["mail"])
+        login_user(session["user"])
+        return redirect(url_for("dashboard"))
+
+    return "Login failed", 401
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    user = session.get("user")
+    return f"Hello, {user.name}! <a href='/logout'>Logout</a>"
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    session.clear()
+    return redirect(f"{AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri=https://test.oviedojeepclub.com")
+
+def _build_auth_code_flow():
+    app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
+    return app.initiate_auth_code_flow(SCOPES, REDIRECT_URI)
+
+def _acquire_token_by_auth_code_flow(flow, args):
+    app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
+    return app.acquire_token_by_auth_code_flow(flow, args)
+
+def _get_user_info(access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
+    return response.json()
 
 class Main(Resource):
     def post(self):
         return jsonify({'message': 'Welcome to the Oviedo Jeep Club Flask REST App'})
 
-
-# adding the defined resources along with their corresponding urls
 api.add_resource(Main, '/')
 
 @app.after_request
