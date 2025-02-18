@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_restful import Resource, Api
 from flask_cors import CORS
 import msal
-import os, time, requests, logging
+import os, time, requests, logging, sys
 
 # Initialize Flask App
 app = Flask(__name__)
