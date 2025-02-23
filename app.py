@@ -8,6 +8,8 @@ import os, time, requests, logging, sys
 # Initialize Flask App
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secure session key (random per restart)
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.config['DEBUG'] = True
 CORS(app)
 api = Api(app)
 
@@ -18,7 +20,8 @@ TENANT_ID = os.getenv("AZURE_TENANT_ID")
 REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI", "https://test.oviedojeepclub.com/auth/callback")
 AZURE_POLICY = os.getenv("AZURE_POLICY")
 SCOPES = ["User.Read"]
-AUTHORITY = f"https://oviedojeepclub.b2clogin.com/{AZURE_POLICY}"
+AZURE_AUTHORITY = os.getenv("AZURE_AUTHORITY")
+AUTHORITY = f"{AZURE_AUTHORITY}/{AZURE_POLICY}"
 LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
 TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
 
