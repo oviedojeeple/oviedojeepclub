@@ -31,7 +31,7 @@ print(f'##### DEBUG ##### AZURE_AUTHORITY:: {AZURE_AUTHORITY}')
 AUTHORITY = f"{AZURE_AUTHORITY}/{AZURE_POLICY}"
 print(f'##### DEBUG ##### AUTHORITY:: {AUTHORITY}')
 LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
-print(f'##### DEBUG ##### LOGIN_UR:: {LOGIN_UR}')
+print(f'##### DEBUG ##### LOGIN_URL:: {LOGIN_URL}')
 TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
 print(f'##### DEBUG ##### TOKEN_URL:: {TOKEN_URL}')
 
