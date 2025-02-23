@@ -8,22 +8,32 @@ import os, time, requests, logging, sys
 # Initialize Flask App
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secure session key (random per restart)
-app.config['PROPAGATE_EXCEPTIONS'] = True
-app.config['DEBUG'] = True
 CORS(app)
 api = Api(app)
 
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.config['DEBUG'] = True
+
 # Azure Entra ID Config (Using Environment Variables)
 CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
+print(f'##### DEBUG ##### CLIENT_ID:: {CLIENT_ID}')
 CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
 TENANT_ID = os.getenv("AZURE_TENANT_ID")
-REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI", "https://test.oviedojeepclub.com/auth/callback")
+print(f'##### DEBUG ##### TENANT_ID:: {TENANT_ID}')
+REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI")
+print(f'##### DEBUG ##### REDIRECT_URI:: {REDIRECT_URI}')
 AZURE_POLICY = os.getenv("AZURE_POLICY")
+print(f'##### DEBUG ##### AZURE_POLICY:: {AZURE_POLICY}')
 SCOPES = ["User.Read"]
+print(f'##### DEBUG ##### SCOPES:: {SCOPES}')
 AZURE_AUTHORITY = os.getenv("AZURE_AUTHORITY")
+print(f'##### DEBUG ##### AZURE_AUTHORITY:: {AZURE_AUTHORITY}')
 AUTHORITY = f"{AZURE_AUTHORITY}/{AZURE_POLICY}"
+print(f'##### DEBUG ##### AUTHORITY:: {AUTHORITY}')
 LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
+print(f'##### DEBUG ##### LOGIN_UR:: {LOGIN_UR}')
 TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
+print(f'##### DEBUG ##### TOKEN_URL:: {TOKEN_URL}')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -72,6 +82,7 @@ def auth_callback():
 def dashboard():
     print("##### DEBUG ##### In dashboard()")
     user = session.get("user")
+    print(f'##### DEBUG ##### In dashboard() - user:: {user}')
     return f"Hello, {user.name}! <a href='/logout'>Logout</a>"
 
 @app.route("/logout")
@@ -85,6 +96,7 @@ def logout():
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
+    print("##### DEBUG ##### In _build_auth_code_flow() - app:: {app}")
     return app.initiate_auth_code_flow(SCOPES, REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
@@ -96,6 +108,7 @@ def _get_user_info(access_token):
     print(f'##### DEBUG ##### In _get_user_info with {access_token}')
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
+    print(f'##### DEBUG ##### In _get_user_info - response:: {response}')
     return response.json()
 
 class Main(Resource):
