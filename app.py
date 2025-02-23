@@ -11,20 +11,6 @@ app.secret_key = os.urandom(24)  # Secure session key (random per restart)
 CORS(app)
 api = Api(app)
 
-# Set up logging
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)  # Log to stdout for Azure App Service Log Stream
-    ]
-)
-
-logger = logging.getLogger(__name__)
-logger.debug("Flask app has started.")
-
 # Azure Entra ID Config (Using Environment Variables)
 CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
 CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
@@ -40,35 +26,32 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 class User(UserMixin):
-    logger.debug(f'In User class with {UserMixin}')
+    print(f'##### DEBUG ##### In User class with {UserMixin}')
     def __init__(self, user_id, name, email):
-        logger.debug(f'In User class with {self} and {user_id} and {name} and {email}')
+        print(f'##### DEBUG ##### In User class with {self} and {user_id} and {name} and {email}')
         self.id = user_id
         self.name = name
         self.email = email
 
 @login_manager.user_loader
 def load_user(user_id):
-    logger.debug(f'In load_user with {user_id}')
-    print(f'In load_user with {user_id}')
+    print(f'##### DEBUG ##### In load_user with {user_id}')
     return session.get("user")
 
 @app.route('/')
 def index():
-    logger.debug("In index()")
-    print("In index()")
+    print("##### DEBUG ##### In index()")
     return render_template('index.html')
 
 @app.route('/login')
 def login():
-    logger.debug("In login()")
-    print("In login()")
+    print("##### DEBUG ##### In login()")
     session["flow"] = _build_auth_code_flow()
     return redirect(session["flow"]["auth_uri"])
 
 @app.route('/auth/callback')
 def auth_callback():
-    logger.debug("In auth_callback()")
+    print("##### DEBUG ##### In auth_callback()")
     if request.args.get("error"):
         return f"Error: {request.args['error']} - {request.args.get('error_description')}"
 
@@ -84,30 +67,30 @@ def auth_callback():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    logger.debug("In dashboard()")
+    print("##### DEBUG ##### In dashboard()")
     user = session.get("user")
     return f"Hello, {user.name}! <a href='/logout'>Logout</a>"
 
 @app.route("/logout")
 @login_required
 def logout():
-    logger.debug("In logout()")
+    print("##### DEBUG ##### In logout()")
     logout_user()
     session.clear()
     return redirect(f"{AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri=https://test.oviedojeepclub.com")
 
 def _build_auth_code_flow():
-    logger.debug("In _build_auth_code_flow()")
+    print("##### DEBUG ##### In _build_auth_code_flow()")
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
     return app.initiate_auth_code_flow(SCOPES, REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
-    logger.debug(f'In _acquire_token_by_auth_code_flow with {flow} and {args}')
+    print(f'##### DEBUG ##### In _acquire_token_by_auth_code_flow with {flow} and {args}')
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
     return app.acquire_token_by_auth_code_flow(flow, args)
 
 def _get_user_info(access_token):
-    logger.debug(f'In _get_user_info with {access_token}')
+    print(f'##### DEBUG ##### In _get_user_info with {access_token}')
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
     return response.json()
