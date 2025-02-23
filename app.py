@@ -16,10 +16,9 @@ api = Api(app)
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler("app.log"),  # Save logs to a file
-        logging.StreamHandler(sys.stdout)  # Send logs to console
+        logging.StreamHandler(sys.stdout)  # Log to stdout for Azure App Service Log Stream
     ]
 )
 
