@@ -50,16 +50,19 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     logger.debug(f'In load_user with {user_id}')
+    print(f'In load_user with {user_id}')
     return session.get("user")
 
 @app.route('/')
 def index():
     logger.debug("In index()")
+    print("In index()")
     return render_template('index.html')
 
 @app.route('/login')
 def login():
     logger.debug("In login()")
+    print("In login()")
     session["flow"] = _build_auth_code_flow()
     return redirect(session["flow"]["auth_uri"])
 
