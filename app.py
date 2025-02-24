@@ -47,7 +47,10 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     print(f'##### DEBUG ##### In load_user with {user_id}')
-    return session.get("user")
+    user_data = session.get("user")
+    if user_data and user_data.get("id") == user_id:
+        return User(**user_data)
+    return None
 
 @app.route('/')
 def index():
@@ -59,15 +62,21 @@ def auth_callback():
     print("##### DEBUG ##### In auth_callback()")
     flow = session.get("flow")
     if not flow:
-        # Log a message and redirect to login with a message
         print("##### DEBUG ##### In auth_callback() Session expired or lost, please try logging in again.")
         return redirect(url_for("login"))
     
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
         user_info = result
-        session["user"] = User(user_info["oid"], user_info["name"], user_info["emails"][0])
-        login_user(session["user"])
+        # Create a dictionary for session storage
+        user_data = {
+            "id": user_info["oid"],
+            "name": user_info["name"],
+            "email": user_info["emails"][0]
+        }
+        session["user"] = user_data
+        # Pass a new User instance to login_user if needed by Flask-Login
+        login_user(User(**user_data))
         return redirect(url_for("index"))
     
     return "Login failed", 401
