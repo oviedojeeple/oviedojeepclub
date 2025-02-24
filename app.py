@@ -66,7 +66,6 @@ def auth_callback():
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
         user_info = result
-        print("##### DEBUG ##### In auth_callback() user_info: ", user_info)
         session["user"] = User(user_info["oid"], user_info["name"], user_info["emails"][0])
         login_user(session["user"])
         return redirect(url_for("index"))
