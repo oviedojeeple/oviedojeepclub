@@ -93,6 +93,11 @@ def logout():
     session.clear()
     return redirect(f"{AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri=https://test.oviedojeepclub.com")
 
+# Privacy Policy Route
+@app.route('/privacy')
+def privacy_policy():
+    return render_template('privacy.html')
+
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
