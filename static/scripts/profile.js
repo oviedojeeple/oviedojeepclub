@@ -1,42 +1,50 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Get menu elements
+    // Menu elements
     const menuProfile = document.getElementById('menu-profile');
     const menuEvents = document.getElementById('menu-events');
 
-    // Get section elements (if they exist)
+    // Section elements
     const profileSection = document.getElementById('profile-section');
     const eventsSection = document.getElementById('events-section');
-    
-    // If not authenticated, clicking the profile button should trigger login
-    if (!isAuthenticated) {
-        menuProfile.addEventListener('click', () => {
-            window.location.href = '/login';
-        });
-    } else {
-        // If authenticated, update button text and attach listeners
-        menuProfile.textContent = "Profile";
-        menuProfile.addEventListener('click', () => {
-            showSection('profile');
-        });
+
+    // Function to hide all sections and then show one
+    function showSection(section) {
+        if (profileSection) profileSection.style.display = 'none';
+        if (eventsSection) eventsSection.style.display = 'none';
         
-        if (menuEvents) {
-            menuEvents.addEventListener('click', () => {
-                showSection('events');
-            });
+        if (section === 'profile' && profileSection) {
+            profileSection.style.display = 'block';
+        } else if (section === 'events' && eventsSection) {
+            eventsSection.style.display = 'block';
         }
     }
 
-    // --- Function to show sections ---
-    function showSection(section) {
-        // Hide both sections if they exist
-        if (profileSection) profileSection.classList.remove('active');
-        if (eventsSection) eventsSection.classList.remove('active');
+    if (isAuthenticated) {
+        // If authenticated, change the profile button text and attach event listeners
+        menuProfile.textContent = "Profile";
+        menuProfile.addEventListener('click', () => { showSection('profile'); });
         
-        // Show the requested section
-        if (section === 'profile' && profileSection) {
-            profileSection.classList.add('active');
-        } else if (section === 'events' && eventsSection) {
-            eventsSection.classList.add('active');
+        // Ensure events button is visible and attach its listener
+        if (menuEvents) {
+            menuEvents.style.display = "inline-block";
+            menuEvents.addEventListener('click', () => { showSection('events'); });
+        }
+        // On load, show the profile section with the user's details
+        showSection('profile');
+    } else {
+        // If not authenticated, the profile button acts as a login trigger
+        menuProfile.textContent = "Login";
+        menuProfile.addEventListener('click', () => { window.location.href = '/login'; });
+        
+        // Hide events button if it exists
+        if (menuEvents) {
+            menuEvents.style.display = "none";
+        }
+        // Optionally, you might choose to show a default prompt
+        if (profileSection) {
+            // The template already shows a login prompt message if not authenticated,
+            // so you might just leave it visible.
+            profileSection.style.display = 'block';
         }
     }
 });
