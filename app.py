@@ -76,7 +76,7 @@ def auth_callback():
         }
         session["user"] = user_data
         # Pass a new User instance to login_user if needed by Flask-Login
-        login_user(User(**user_data))
+        login_user(User(user_data))
         return redirect(url_for("index"))
     
     return "Login failed", 401
