@@ -24,12 +24,16 @@
     <main>
         <section id="profile-section">
             <h2>Profile Details</h2>
-            <div id="profile-container">
-                <div>
-                    <p class="empty-profile">
-                        No profile information available. Please authenticate. 
-                    </p>
-                </div>
+            <div id="profile-section" class="section">
+                {% if user.is_authenticated %}
+                    <h2>Profile</h2>
+                    <table class="profile-details">
+                        <tr><td>Name</td><td>{{ user.name }}</td></tr>
+                        <tr><td>Email</td><td>{{ user.email }}</td></tr>
+                    </table>
+                {% else %}
+                    <p>Please log in to view your profile.</p>
+                {% endif %}
             </div>
         </section>
 
@@ -46,6 +50,10 @@
         <p>© 2025 Oviedo Jeep Club. All rights reserved.</p>
         <p><a href="/privacy">Privacy Policy</a></p>
     </footer>
+    <script>
+        var isAuthenticated = {{ user.is_authenticated | tojson }};
+        var userName = {{ user.name | tojson if user.is_authenticated else 'null' }};
+    </script>
     <script src="/static/scripts/profile.js"></script>
 </body>
 </html>
