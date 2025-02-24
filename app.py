@@ -24,7 +24,7 @@ REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI")
 print(f'##### DEBUG ##### REDIRECT_URI:: {REDIRECT_URI}')
 AZURE_POLICY = os.getenv("AZURE_POLICY")
 print(f'##### DEBUG ##### AZURE_POLICY:: {AZURE_POLICY}')
-SCOPES = ["User.Read"]
+SCOPES = ["offline_access", "openid"]
 print(f'##### DEBUG ##### SCOPES:: {SCOPES}')
 AZURE_AUTHORITY = os.getenv("AZURE_AUTHORITY")
 print(f'##### DEBUG ##### AZURE_AUTHORITY:: {AZURE_AUTHORITY}')
