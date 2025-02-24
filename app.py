@@ -24,7 +24,7 @@ REDIRECT_URI = os.getenv("AZURE_REDIRECT_URI")
 print(f'##### DEBUG ##### REDIRECT_URI:: {REDIRECT_URI}')
 AZURE_POLICY = os.getenv("AZURE_POLICY")
 print(f'##### DEBUG ##### AZURE_POLICY:: {AZURE_POLICY}')
-SCOPES = ["offline_access", "openid", "profile"]
+SCOPES = ["openid", "offline_access"]
 print(f'##### DEBUG ##### SCOPES:: {SCOPES}')
 AZURE_AUTHORITY = os.getenv("AZURE_AUTHORITY")
 print(f'##### DEBUG ##### AZURE_AUTHORITY:: {AZURE_AUTHORITY}')
@@ -120,9 +120,7 @@ def _build_auth_code_flow():
     client_app = msal.ConfidentialClientApplication(
         CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY
     )
-    print("##### DEBUG ##### In _build_auth_code_flow() - app:: {app}")
-    # Ensure the scopes are passed as a list.
-    return client_app.initiate_auth_code_flow(list(SCOPES), REDIRECT_URI)
+    return client_app.initiate_auth_code_flow(SCOPES, REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
     print(f'##### DEBUG ##### In _acquire_token_by_auth_code_flow with {flow} and {args}')
