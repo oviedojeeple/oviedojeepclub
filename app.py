@@ -85,6 +85,23 @@ def dashboard():
     print(f'##### DEBUG ##### In dashboard() - user:: {user}')
     return f"Hello, {user.name}! <a href='/logout'>Logout</a>"
 
+# Data Deletion Route
+@app.route('/delete-data', methods=['GET', 'POST'])
+def delete_data():
+    if request.method == 'POST':
+        email = request.form['email']
+        
+        # Implement the data deletion logic here
+        # Example: Remove the user from Azure Entra ID, or mark the account as deleted
+        
+        # For demonstration, we'll just print the email
+        print(f"Data deletion requested for: {email}")
+        
+        # Send success message to the template
+        return render_template('delete_data.html', message="Your data deletion request has been received.", message_type="success")
+    
+    return render_template('delete_data.html')
+
 @app.route("/logout")
 @login_required
 def logout():
