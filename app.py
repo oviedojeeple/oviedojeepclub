@@ -110,8 +110,12 @@ def privacy_policy():
 
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
-    app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
-    return app.initiate_auth_code_flow(scopes=["openid"], redirect_uri=REDIRECT_URI)
+    app = msal.ConfidentialClientApplication(
+        CLIENT_ID,
+        CLIENT_SECRET,
+        authority=AUTHORITY
+    )
+    return app.initiate_auth_code_flow(redirect_uri=REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
