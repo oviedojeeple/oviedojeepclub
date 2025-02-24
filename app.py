@@ -56,12 +56,20 @@ def index():
 
 @app.route('/auth/callback')
 def auth_callback():
-    result = _acquire_token_by_auth_code_flow(session.get("flow"), request.args)
+    def auth_callback():
+    flow = session.get("flow")
+    if not flow:
+        # Log a message and redirect to login with a message
+        print("Session expired or lost, please try logging in again.")
+        return redirect(url_for("login"))
+    
+    result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
-        user_info = result  # ID token claims
+        user_info = result
         session["user"] = User(user_info["oid"], user_info["name"], user_info["emails"][0])
         login_user(session["user"])
         return redirect(url_for("index"))
+    
     return "Login failed", 401
 
 @app.route('/login')
