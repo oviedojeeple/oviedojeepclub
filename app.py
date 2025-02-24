@@ -115,7 +115,7 @@ def _build_auth_code_flow():
         CLIENT_SECRET,
         authority=AUTHORITY
     )
-    return app.initiate_auth_code_flow(redirect_uri=REDIRECT_URI)
+    return app.initiate_auth_code_flow([], redirect_uri=REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
