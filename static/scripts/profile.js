@@ -1,51 +1,42 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Menu elements
+    // Get menu elements
     const menuProfile = document.getElementById('menu-profile');
     const menuEvents = document.getElementById('menu-events');
 
-    // Section elements
+    // Get section elements (if they exist)
     const profileSection = document.getElementById('profile-section');
     const eventsSection = document.getElementById('events-section');
-
-    // Set initial state based on authentication
-    if (isAuthenticated) {
-        menuProfile.textContent = "Profile";
-        if (menuEvents) {
-            menuEvents.style.display = "inline-block";
-        }
-        showSection('profile');  // Show profile section by default if authenticated
+    
+    // If not authenticated, clicking the profile button should trigger login
+    if (!isAuthenticated) {
+        menuProfile.addEventListener('click', () => {
+            window.location.href = '/login';
+        });
     } else {
-        menuProfile.textContent = "Login";
-        showSection('profile');  // Default view with login prompt
-    }
-
-    // Event Listener for Profile/Login Button
-    menuProfile.addEventListener('click', () => {
-        if (!isAuthenticated) {
-            window.location.href = '/login';  // Redirect to /login if not authenticated
-        } else {
-            showSection('profile');  // Show profile section if authenticated
+        // If authenticated, update button text and attach listeners
+        menuProfile.textContent = "Profile";
+        menuProfile.addEventListener('click', () => {
+            showSection('profile');
+        });
+        
+        if (menuEvents) {
+            menuEvents.addEventListener('click', () => {
+                showSection('events');
+            });
         }
-    });
-
-    // Event Listener for Events Button (if exists)
-    if (menuEvents) {
-        menuEvents.addEventListener('click', () => showSection('events'));
     }
 
-    // --- Functions ---
-
+    // --- Function to show sections ---
     function showSection(section) {
-        profileSection.classList.remove('active');
-        menuProfile.classList.remove('active');
-        if (menuEvents) menuEvents.classList.remove('active');
-
-        if (section === 'profile') {
+        // Hide both sections if they exist
+        if (profileSection) profileSection.classList.remove('active');
+        if (eventsSection) eventsSection.classList.remove('active');
+        
+        // Show the requested section
+        if (section === 'profile' && profileSection) {
             profileSection.classList.add('active');
-            menuProfile.classList.add('active');
         } else if (section === 'events' && eventsSection) {
             eventsSection.classList.add('active');
-            if (menuEvents) menuEvents.classList.add('active');
         }
     }
 });
