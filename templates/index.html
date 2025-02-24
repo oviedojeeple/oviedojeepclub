@@ -1,59 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oviedo Jeep Club</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oviedo Jeep Club</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
-
 <body>
-    <header>
-        <img src="/static/images/ojc.png" alt="Oviedo Jeep Club Logo" class="logo">
-    </header>
+  <header>
+      <img src="/static/images/ojc.png" alt="Oviedo Jeep Club Logo" class="logo">
+  </header>
 
-    <nav class="menu">
-        <!-- Profile button is always visible so the user can trigger login -->
-        <button id="menu-profile" class="nav-btn">Login</button>
-        <!-- Events and Admin remain hidden until authentication -->
-        <button id="menu-events" class="nav-btn" style="display: none;">Events</button>
-    </nav>
+  <nav class="menu">
+      <!-- Always visible login/profile button -->
+      <button id="menu-profile" class="nav-btn">
+          {% if user.is_authenticated %}
+              Profile
+          {% else %}
+              Login
+          {% endif %}
+      </button>
+      <!-- Events button shown only if authenticated -->
+      {% if user.is_authenticated %}
+          <button id="menu-events" class="nav-btn">Events</button>
+      {% endif %}
+  </nav>
 
-    <main>
-        <section id="profile-section">
-            <h2>Profile Details</h2>
-            <div id="profile-section" class="section">
-                {% if user.is_authenticated %}
-                    <h2>Profile</h2>
-                    <table class="profile-details">
-                        <tr><td>Name</td><td>{{ user.name }}</td></tr>
-                        <tr><td>Email</td><td>{{ user.email }}</td></tr>
-                    </table>
-                {% else %}
-                    <p>Please log in to view your profile.</p>
-                {% endif %}
-            </div>
-        </section>
+  <main>
+      {% if user.is_authenticated %}
+          <!-- Show profile and events sections if authenticated -->
+          <section id="profile-section">
+              <h2>Profile</h2>
+              <table class="profile-details">
+                  <tr><td>Name</td><td>{{ user.name }}</td></tr>
+                  <tr><td>Email</td><td>{{ user.email }}</td></tr>
+              </table>
+          </section>
+          <section id="events-section" class="content-section">
+              <h2>Events</h2>
+              <div id="events-section-content">
+                  <p>Events will appear here once you log in.</p>
+              </div>
+          </section>
+      {% else %}
+          <!-- Show a prompt if not authenticated -->
+          <section id="login-prompt">
+              <p>Please log in to view your profile and events.</p>
+          </section>
+      {% endif %}
+  </main>
 
-        <!-- Events Section (shown only when authenticated) -->
-        <section id="events-section" class="content-section">
-            <h2>Events</h2>
-            <div id="events-section-content">
-                <p>Events will appear here once you log in.</p>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <p>© 2025 Oviedo Jeep Club. All rights reserved.</p>
-        <p><a href="/privacy">Privacy Policy</a></p>
-    </footer>
-    <script>
-        var isAuthenticated = {{ user.is_authenticated | tojson }};
-        var userName = {{ user.name | tojson if user.is_authenticated else 'null' }};
-    </script>
-    <script src="/static/scripts/profile.js"></script>
+  <footer>
+      <p>© 2025 Oviedo Jeep Club. All rights reserved.</p>
+      <p><a href="/privacy">Privacy Policy</a></p>
+  </footer>
+  <script>
+      var isAuthenticated = {{ user.is_authenticated | tojson }};
+  </script>
+  <script src="/static/scripts/profile.js"></script>
 </body>
 </html>
