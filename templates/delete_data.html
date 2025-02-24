@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Deletion Request | Oviedo Jeep Club</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        h1, h2 {
+            color: #333;
+        }
+        
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        input[type="email"], button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        button {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #333;
+        }
+        
+        .success, .error {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Data Deletion Request</h1>
+    <p>If you would like to request the deletion of your personal data, please enter your email address below:</p>
+    <form action="/delete-data" method="post">
+        <input type="email" name="email" placeholder="Your Email Address" required>
+        <button type="submit">Request Data Deletion</button>
+    </form>
+    {% if message %}
+    <div class="{{ message_type }}">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+</body>
+
+</html>
