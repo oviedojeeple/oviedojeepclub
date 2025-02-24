@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user  # Import current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
 import msal
@@ -54,13 +54,7 @@ def load_user(user_id):
 @app.route('/')
 def index():
     print("##### DEBUG ##### In index()")
-    return render_template('index.html')
-
-@app.route('/login')
-def login():
-    print("##### DEBUG ##### In login()")
-    session["flow"] = _build_auth_code_flow()
-    return redirect(session["flow"]["auth_uri"])
+    return render_template('index.html', user=current_user)  # Pass current_user to the template
 
 @app.route('/auth/callback')
 def auth_callback():
@@ -73,9 +67,15 @@ def auth_callback():
         user_info = _get_user_info(result["access_token"])
         session["user"] = User(user_info["id"], user_info["displayName"], user_info["mail"])
         login_user(session["user"])
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("index"))  # Redirect to main page after login
 
     return "Login failed", 401
+
+@app.route('/login')
+def login():
+    print("##### DEBUG ##### In login()")
+    session["flow"] = _build_auth_code_flow()
+    return redirect(session["flow"]["auth_uri"])
 
 @app.route("/dashboard")
 @login_required
