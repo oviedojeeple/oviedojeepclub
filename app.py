@@ -58,17 +58,12 @@ def index():
 
 @app.route('/auth/callback')
 def auth_callback():
-    print("##### DEBUG ##### In auth_callback()")
-    if request.args.get("error"):
-        return f"Error: {request.args['error']} - {request.args.get('error_description')}"
-
     result = _acquire_token_by_auth_code_flow(session.get("flow"), request.args)
-    if "access_token" in result:
-        user_info = _get_user_info(result["access_token"])
-        session["user"] = User(user_info["id"], user_info["displayName"], user_info["mail"])
+    if result:
+        user_info = result  # ID token claims
+        session["user"] = User(user_info["oid"], user_info["name"], user_info["emails"][0])
         login_user(session["user"])
-        return redirect(url_for("index"))  # Redirect to main page after login
-
+        return redirect(url_for("index"))
     return "Login failed", 401
 
 @app.route('/login')
@@ -124,9 +119,12 @@ def _build_auth_code_flow():
     return client_app.initiate_auth_code_flow(SCOPES, REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
-    print(f'##### DEBUG ##### In _acquire_token_by_auth_code_flow with {flow} and {args}')
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
-    return app.acquire_token_by_auth_code_flow(flow, args)
+    result = app.acquire_token_by_auth_code_flow(flow, args)
+    if "id_token" in result:
+        user_info = result["id_token_claims"]  # Extract user details from ID token
+        return user_info
+    return None
 
 def _get_user_info(access_token):
     print(f'##### DEBUG ##### In _get_user_info with {access_token}')
