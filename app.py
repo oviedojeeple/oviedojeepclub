@@ -117,10 +117,13 @@ def privacy_policy():
 
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
+    print("##### DEBUG ##### Scopes before passing to MSAL: ", SCOPES, type(SCOPES))
     client_app = msal.ConfidentialClientApplication(
         CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY
     )
-    return client_app.initiate_auth_code_flow(SCOPES, REDIRECT_URI)
+    scopes_list = list(SCOPES)  # Explicitly ensure it’s a list
+    return client_app.initiate_auth_code_flow(scopes_list, REDIRECT_URI)
+
 
 def _acquire_token_by_auth_code_flow(flow, args):
     print(f'##### DEBUG ##### In _acquire_token_by_auth_code_flow with {flow} and {args}')
