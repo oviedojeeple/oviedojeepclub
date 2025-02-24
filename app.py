@@ -48,7 +48,7 @@ class User(UserMixin):
 def load_user(user_id):
     print(f'##### DEBUG ##### In load_user with {user_id}')
     user_data = session.get("user")
-    if user_data and user_data.get("id") == user_id:
+    if user_data and user_data.get("user_id") == user_id:
         return User(**user_data)
     return None
 
@@ -70,7 +70,7 @@ def auth_callback():
         user_info = result
         # Create a dictionary for session storage
         user_data = {
-            "id": user_info["oid"],
+            "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0]
         }
