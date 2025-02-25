@@ -7,7 +7,7 @@ import os, time, requests
 
 # Initialize Flask App
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Secure session key (random per restart)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Secure session key (random per restart)
 CORS(app)
 api = Api(app)
 
