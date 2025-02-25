@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session
+from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user  # Import current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
@@ -53,6 +53,15 @@ def load_user(user_id):
         print(f'##### DEBUG ##### Session user data: {user_data}')
         return User(**user_data)
     return None
+
+@app.before_request
+def validate_user_session():
+    if current_user.is_authenticated:
+        if not user_still_exists(current_user.id):
+            logout_user()
+            session.clear()
+            flash("Your account is no longer valid. Please log in again.")
+            return redirect(url_for("login"))
 
 @app.route('/')
 def index():
@@ -151,6 +160,41 @@ def _get_user_info(access_token):
     response = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
     print(f'##### DEBUG ##### In _get_user_info - response:: {response}')
     return response.json()
+
+def _acquire_graph_api_token():
+    # Use the tenant-specific authority for Graph API (not your B2C authority)
+    authority_url = f"https://login.microsoftonline.com/{TENANT_ID}"
+    app = msal.ConfidentialClientApplication(
+        CLIENT_ID,
+        client_credential=CLIENT_SECRET,
+        authority=authority_url
+    )
+    result = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+    if "access_token" in result:
+        return result["access_token"]
+    else:
+        print("Error acquiring Graph token:", result.get("error_description"))
+        return None
+
+def user_still_exists(user_id):
+    # Acquire an access token for the Microsoft Graph API
+    token = _acquire_graph_api_token()
+    if not token:
+        # If you can't get a token, treat the user as non-existent to be safe.
+        return False
+
+    headers = {"Authorization": f"Bearer {token}"}
+    graph_url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    response = requests.get(graph_url, headers=headers)
+    
+    if response.status_code == 200:
+        return True  # User exists
+    elif response.status_code == 404:
+        return False  # User not found (deleted or does not exist)
+    else:
+        # Handle other status codes or log for further analysis
+        print("Unexpected response from Graph API:", response.status_code, response.text)
+        return False
 
 class Main(Resource):
     def post(self):
