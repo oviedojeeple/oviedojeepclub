@@ -58,15 +58,6 @@ body {
 #profile-section.active,
 #events-section.active,
 
-.profile-pic {
-    border-radius: 50%;
-    max-width: 150px;
-    width: 80%;
-    margin: 10px auto;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    display: block;
-}
-
 .profile-details {
     border: 1px solid #ddd;
     border-radius: 5px;
