@@ -47,6 +47,7 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     print(f'##### DEBUG ##### In load_user with {user_id}')
+    print("##### DEBUG ##### In load_user with Full session:", dict(session))
     user_data = session.get("user")
     if user_data and user_data.get("user_id") == user_id:
         print(f'##### DEBUG ##### Session user data: {user_data}')
@@ -78,6 +79,7 @@ def auth_callback():
         session["user"] = user_data
         # Pass a new User instance to login_user if needed by Flask-Login
         login_user(User(**user_data), remember=True)
+        print("##### DEBUG ##### In auth_callback() Session after login: ", session)
         return redirect(url_for("index"))
     
     return "Login failed", 401
