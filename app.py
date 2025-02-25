@@ -56,6 +56,7 @@ def load_user(user_id):
 
 @app.before_request
 def validate_user_session():
+    print("##### DEBUG ##### In validate_user_session()")
     if current_user.is_authenticated:
         if not user_still_exists(current_user.id):
             logout_user()
@@ -162,6 +163,7 @@ def _get_user_info(access_token):
     return response.json()
 
 def _acquire_graph_api_token():
+    print("##### DEBUG ##### In _acquire_graph_api_token()")
     # Use the tenant-specific authority for Graph API (not your B2C authority)
     authority_url = f"https://login.microsoftonline.com/{TENANT_ID}"
     app = msal.ConfidentialClientApplication(
@@ -177,6 +179,7 @@ def _acquire_graph_api_token():
         return None
 
 def user_still_exists(user_id):
+    print(f'##### DEBUG ##### In user_still_exists with {user_id}')
     # Acquire an access token for the Microsoft Graph API
     token = _acquire_graph_api_token()
     if not token:
