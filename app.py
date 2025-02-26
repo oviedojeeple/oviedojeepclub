@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user  # Import current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from datetime import datetime
 from square.client import Client
 import msal
 import os, time, requests
@@ -90,13 +91,34 @@ def auth_callback():
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
         user_info = result
-        # Create a dictionary for session storage
+
+        # Retrieve the raw custom attribute value
+        member_expiration_raw = user_info.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+        
+        # Convert the integer timestamp to a date string.
+        # If the timestamp is in milliseconds, divide by 1000. Adjust as necessary.
+        if member_expiration_raw:
+            try:
+                timestamp_int = int(member_expiration_raw)
+                # Check if the timestamp seems to be in milliseconds
+                if timestamp_int > 1e10:
+                    timestamp_int = timestamp_int / 1000
+                member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%Y-%m-%d')
+            except Exception as e:
+                print("Error converting timestamp:", e)
+                member_expiration = "Invalid Date"
+        else:
+            member_expiration = "Not Available"
+        
+        # Create the user_data dictionary including the formatted expiration date
         user_data = {
             "user_id": user_info["oid"],
             "name": user_info["name"],
-            "email": user_info["emails"][0]
+            "email": user_info["emails"][0],
+            "member_expiration_date": member_expiration
         }
         session["user"] = user_data
+        
         # Pass a new User instance to login_user if needed by Flask-Login
         login_user(User(**user_data), remember=True)
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
