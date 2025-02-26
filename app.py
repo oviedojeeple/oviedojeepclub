@@ -286,7 +286,7 @@ def user_still_exists(user_id):
 
 def get_facebook_events(page_id, access_token):
     print(f'##### DEBUG ##### In get_facebook_events with {page_id}')
-    url = f"https://graph.facebook.com/v14.0/{page_id}/events"
+    url = f"https://graph.facebook.com/v22.0/{page_id}/events"
     params = {
         "access_token": access_token
     }
