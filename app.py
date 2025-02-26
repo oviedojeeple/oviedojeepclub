@@ -158,13 +158,13 @@ def pay():
         result = client.payments.create_payment(body)
         
         if result.is_success():
-            # Add user to directory
             flash('Payment Successful! Welcome to Oviedo Jeep Club.', 'success')
             return redirect(url_for('profile'))
         else:
             flash('Payment Failed. Please try again.', 'danger')
     
-    return render_template('pay.html')
+    # Pass Application ID to the template
+    return render_template('pay.html', application_id=SQUARE_APPLICATION_ID)
 
 # Privacy Policy Route
 @app.route('/privacy')
