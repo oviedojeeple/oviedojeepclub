@@ -159,6 +159,22 @@ def delete_data():
     
     return render_template('delete_data.html')
 
+@app.route('/fb-events')
+def fb_events():
+    print("##### DEBUG ##### In fb_events()")
+    FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
+    FACEBOOK_ACCESS_TOKEN = os.getenv("FACEBOOK_ACCESS_TOKEN")
+    
+    events = get_facebook_events(FACEBOOK_PAGE_ID, FACEBOOK_ACCESS_TOKEN)
+    if events is None:
+        return jsonify({"error": "Unable to fetch events"}), 500
+    
+    # Option 1: Return as JSON for debugging/API purposes
+    # return jsonify(events)
+    
+    # Option 2: Render a template (e.g., fb_events.html) to display events on your site
+    return render_template('fb_events.html', events=events)
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -267,6 +283,25 @@ def user_still_exists(user_id):
         # Handle other status codes or log for further analysis
         print("Unexpected response from Graph API:", response.status_code, response.text)
         return False
+
+def get_facebook_events(page_id, access_token):
+    print(f'##### DEBUG ##### In get_facebook_events with {page_id}')
+    url = f"https://graph.facebook.com/v14.0/{page_id}/events"
+    params = {
+        "access_token": access_token
+    }
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        if "error" in data:
+            print("Facebook API error:", data["error"])
+            return None
+        # Return the list of events; Facebook returns events under the 'data' key.
+        return data.get("data", [])
+    except Exception as e:
+        print("Error fetching Facebook events:", e)
+        return None
+
 
 class Main(Resource):
     def post(self):
