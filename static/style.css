@@ -91,9 +91,11 @@ body {
 }
 
 .external-logo {
-    width: 20px;
-    height: 20px;
-    vertical-align: middle; /* Align icon with text */
+    display: inline-block;
+    max-height: 20px;  /* or whatever size you prefer */
+    height: auto;
+    width: auto;
+    vertical-align: middle;
     margin-right: 5px;
 }
 
