@@ -33,8 +33,12 @@
           <section id="profile-section">
               <h2>Profile</h2>
               <table class="profile-details">
-                  <tr><td>Name</td><td>{{ user.name }}</td></tr>
-                  <tr><td>Email</td><td>{{ user.email }}</td></tr>
+                <tr><td>Name</td><td>{{ user.name }}</td></tr>
+                <tr><td>Email</td><td>{{ user.email }}</td></tr>
+                  <tr>
+                    <td>Member Expiration Date</td>
+                    <td>{{ user.member_expiration_date }}</td>
+                  </tr>
               </table>
           </section>
           <section id="events-section" class="content-section">
