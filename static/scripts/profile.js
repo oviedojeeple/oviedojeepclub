@@ -1,9 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Menu elements
-    const menuProfile = document.getElementById('menu-profile');
-    const menuEvents = document.getElementById('menu-events');
-
-    // Section elements
+    // Section elements (Profile and Events already exist)
     const profileSection = document.getElementById('profile-section');
     const eventsSection = document.getElementById('events-section');
 
@@ -20,31 +16,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (isAuthenticated) {
-        // If authenticated, change the profile button text and attach event listeners
-        menuProfile.textContent = "Profile";
-        menuProfile.addEventListener('click', () => { showSection('profile'); });
+        // Authenticated buttons
+        const menuProfile = document.getElementById('menu-profile');
+        const menuEvents = document.getElementById('menu-events');
+        const menuMerch = document.getElementById('menu-merchandise');
+        const menuLogout = document.getElementById('menu-logout');
         
-        // Ensure events button is visible and attach its listener
+        // Set up listeners for Profile and Events as before
+        menuProfile.addEventListener('click', () => { showSection('profile'); });
         if (menuEvents) {
             menuEvents.style.display = "inline-block";
             menuEvents.addEventListener('click', () => { showSection('events'); });
         }
-        // On load, show the profile section with the user's details
+        // Add Merchandise: open store in a new tab
+        if (menuMerch) {
+            menuMerch.addEventListener('click', () => {
+                window.open('https://goinkit.com/oviedo_jeep_club/shop/home', '_blank');
+            });
+        }
+        // Add Logout: redirect to /logout
+        if (menuLogout) {
+            menuLogout.addEventListener('click', () => {
+                window.location.href = '/logout';
+            });
+        }
+        // Show the profile section on load
         showSection('profile');
     } else {
-        // If not authenticated, the profile button acts as a login trigger
-        menuProfile.textContent = "Login";
-        menuProfile.addEventListener('click', () => { window.location.href = '/login'; });
+        // Non-authenticated buttons
+        const menuLogin = document.getElementById('menu-login');
+        const menuJoin = document.getElementById('menu-join');
         
-        // Hide events button if it exists
-        if (menuEvents) {
-            menuEvents.style.display = "none";
-        }
-        // Optionally, you might choose to show a default prompt
-        if (profileSection) {
-            // The template already shows a login prompt message if not authenticated,
-            // so you might just leave it visible.
-            profileSection.style.display = 'block';
-        }
+        // Login button goes to /login
+        menuLogin.addEventListener('click', () => { window.location.href = '/login'; });
+        // Join button goes to /pay (membership fee page)
+        menuJoin.addEventListener('click', () => { window.location.href = '/pay'; });
+        
+        // Optionally, you can choose what section to display by default here
     }
 });

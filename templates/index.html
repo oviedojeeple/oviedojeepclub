@@ -13,20 +13,20 @@
   </header>
 
   <nav class="menu">
-      <!-- Always visible login/profile button -->
-      <button id="menu-profile" class="nav-btn">
-          {% if user.is_authenticated %}
-              Profile
-          {% else %}
-              Login
-          {% endif %}
+    {% if user.is_authenticated %}
+      <button id="menu-profile" class="nav-btn">Profile</button>
+      <button id="menu-events" class="nav-btn">Events</button>
+      <button id="menu-merchandise" class="nav-btn">
+        <img src="/static/images/GoInkIt.png" alt="Merchandise" class="external-logo">
+        Merchandise
       </button>
-      <!-- Events button shown only if authenticated -->
-      {% if user.is_authenticated %}
-          <button id="menu-events" class="nav-btn">Events</button>
-      {% endif %}
+      <button id="menu-logout" class="nav-btn">Logout</button>
+    {% else %}
+      <button id="menu-login" class="nav-btn">Login</button>
+      <button id="menu-join" class="nav-btn">Join</button>
+    {% endif %}
   </nav>
-
+  
   <main>
       {% if user.is_authenticated %}
           <!-- Show profile and events sections if authenticated -->
