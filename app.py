@@ -287,6 +287,7 @@ def get_facebook_events(page_id, access_token):
     url = f"https://graph.facebook.com/v22.0/{page_id}/events"
     params = {
         "access_token": access_token
+        "since": int(time.time())  # current Unix timestamp in seconds
     }
     try:
         response = requests.get(url, params=params)
