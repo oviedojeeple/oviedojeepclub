@@ -105,7 +105,7 @@ def auth_callback():
                 # Check if the timestamp seems to be in milliseconds
                 if timestamp_int > 1e10:
                     timestamp_int = timestamp_int / 1000
-                member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%Y-%m-%d')
+                member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%B, %-d %Y')
             except Exception as e:
                 print("Error converting timestamp:", e)
                 member_expiration = "Invalid Date"
