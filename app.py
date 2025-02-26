@@ -305,7 +305,8 @@ def sort_events_by_date(events):
     # Convert start_time string to datetime objects for proper sorting.
     return sorted(
         events,
-        key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z')
+        key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
+        reverse=True
     )
 
 class Main(Resource):
