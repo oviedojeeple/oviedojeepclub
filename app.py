@@ -49,11 +49,12 @@ client = Client(
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
-    def __init__(self, user_id, name, email):
+    def __init__(self, user_id, name, email, member_expiration_date=None):
         print(f'##### DEBUG ##### In User class with {self} and {user_id} and {name} and {email}')
         self.id = user_id
         self.name = name
         self.email = email
+        self.member_expiration_date = member_expiration_date
 
 @login_manager.user_loader
 def load_user(user_id):
