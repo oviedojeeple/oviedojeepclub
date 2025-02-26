@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session, flash
+from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session, flash, redirect
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user  # Import current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
@@ -32,9 +32,18 @@ LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
 print(f'##### DEBUG ##### LOGIN_URL:: {LOGIN_URL}')
 TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
 print(f'##### DEBUG ##### TOKEN_URL:: {TOKEN_URL}')
+SQUARE_ACCESS_TOKEN = os.getenv("SQUARE_ACCESS_TOKEN")
+print(f'##### DEBUG ##### TOKEN_URL:: {SQUARE_ACCESS_TOKEN}')
+SQUARE_APPLICATION_ID = os.getenv("SQUARE_APPLICATION_ID")
+print(f'##### DEBUG ##### TOKEN_URL:: {SQUARE_APPLICATION_ID}')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+client = Client(
+    access_token=SQUARE_ACCESS_TOKEN,
+    environment='sandbox'  # Change to 'production' when ready
+)
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
@@ -133,10 +142,45 @@ def logout():
     session.clear()
     return redirect(f"{AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri=https://test.oviedojeepclub.com")
 
+@app.route('/pay', methods=['GET', 'POST'])
+def pay():
+    print("##### DEBUG ##### In pay()")
+    if request.method == 'POST':
+        amount = 5000  # Membership Fee (e.g., $50.00)
+        body = {
+            "source_id": request.form['nonce'],
+            "amount_money": {
+                "amount": amount,
+                "currency": "USD"
+            },
+            "idempotency_key": os.urandom(12).hex()
+        }
+        result = client.payments.create_payment(body)
+        
+        if result.is_success():
+            # Add user to directory
+            flash('Payment Successful! Welcome to Oviedo Jeep Club.', 'success')
+            return redirect(url_for('profile'))
+        else:
+            flash('Payment Failed. Please try again.', 'danger')
+    
+    return render_template('pay.html')
+
 # Privacy Policy Route
 @app.route('/privacy')
 def privacy_policy():
     return render_template('privacy.html')
+
+@app.route('/webhook/square', methods=['POST'])
+def square_webhook():
+    print("##### DEBUG ##### In square_webhook()")
+    event = request.json
+    if event['type'] == 'payment.updated':
+        payment_status = event['data']['object']['payment']['status']
+        if payment_status == 'COMPLETED':
+            # Mark user as paid or activate membership
+            print("Payment Completed")
+    return '', 200
 
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
