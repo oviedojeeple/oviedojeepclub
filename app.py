@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user  # Import current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from square.client import Client
 import msal
 import os, time, requests
 
