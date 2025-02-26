@@ -92,6 +92,7 @@ def auth_callback():
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
         user_info = result
+        print("##### DEBUG ##### In auth_callback(): Full token claims:", user_info)
 
         # Retrieve the raw custom attribute value
         member_expiration_raw = user_info.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
