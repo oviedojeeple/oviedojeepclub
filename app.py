@@ -169,11 +169,9 @@ def fb_events():
     if events is None:
         return jsonify({"error": "Unable to fetch events"}), 500
     
-    # Option 1: Return as JSON for debugging/API purposes
-    # return jsonify(events)
-    
-    # Option 2: Render a template (e.g., fb_events.html) to display events on your site
-    return render_template('fb_events.html', events=events)
+    # Sort events by start time in ascending order
+    sorted_events = sort_events_by_date(events)
+    return jsonify(sorted_events)
 
 @app.route("/logout")
 @login_required
@@ -302,6 +300,13 @@ def get_facebook_events(page_id, access_token):
         print("Error fetching Facebook events:", e)
         return None
 
+def sort_events_by_date(events):
+    print("##### DEBUG ##### In sort_events_by_date()")
+    # Convert start_time string to datetime objects for proper sorting.
+    return sorted(
+        events,
+        key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z')
+    )
 
 class Main(Resource):
     def post(self):
