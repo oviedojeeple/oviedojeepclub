@@ -95,7 +95,7 @@ def auth_callback():
         print("##### DEBUG ##### In auth_callback(): Full token claims:", user_info)
 
         # Retrieve the raw custom attribute value
-        member_expiration_raw = user_info.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+        member_expiration_raw = user_info.get("extension_MemberExpirationDate")
         
         # Convert the integer timestamp to a date string.
         # If the timestamp is in milliseconds, divide by 1000. Adjust as necessary.
