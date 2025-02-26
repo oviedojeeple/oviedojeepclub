@@ -99,6 +99,20 @@ body {
     margin-right: 5px;
 }
 
+.event {
+    margin: 10px auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fff;
+    max-width: 500px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: left;
+}
+.event h3 {
+    margin-top: 0;
+}
+
 .form-group {
     display: flex;
     flex-direction: column; /* Align items vertically */
