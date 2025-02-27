@@ -112,21 +112,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set up the "Collect" button listener to trigger the sync process
     if (collectBtn) {
         collectBtn.addEventListener('click', () => {
-            fetch('/sync-public-events')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert("Error syncing events: " + data.error);
-                    } else {
-                        alert(data.message);
-                        // Reload events from blob after sync
-                        loadBlobEvents();
-                    }
-                })
-                .catch(error => {
-                    console.error("Error syncing events", error);
-                    alert("Error syncing events.");
-                });
+            document.getElementById('collect-events-btn').addEventListener('click', function() {
+              window.location.href = '/sync-public-events';
+            });
         });
     }
 });
