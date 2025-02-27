@@ -154,8 +154,7 @@ def facebook_login():
 @app.route('/facebook/callback')
 @login_required
 def facebook_callback():
-    print("##### DEBUG ##### In facebook_callback()")
-    # Verify the 'state' parameter to protect against CSRF
+    # Verify state parameter for security
     if request.args.get('state') != session.get('fb_state'):
         return "State mismatch", 400
 
@@ -163,7 +162,6 @@ def facebook_callback():
     if not code:
         return "No code provided", 400
 
-    # Exchange the code for an access token
     token_url = "https://graph.facebook.com/v22.0/oauth/access_token"
     redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")
     params = {
@@ -178,12 +176,11 @@ def facebook_callback():
     if "access_token" not in token_data:
         return f"Failed to get access token: {token_data.get('error')}", 400
 
-    fb_access_token = token_data["access_token"]
-    session["fb_access_token"] = fb_access_token  # Store the token in session for later use
+    # Save the access token in session
+    session["fb_access_token"] = token_data["access_token"]
 
-    # Optionally, you might want to fetch and store a page access token here using /me/accounts
-    # For now, we redirect the user back to the home page.
-    return redirect(url_for("index"))
+    # Redirect back to index with section=events query parameter.
+    return redirect(url_for("index", section="events"))
 
 @app.route('/login')
 def login():
