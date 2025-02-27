@@ -1,16 +1,17 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Utility: Get URL parameters
+    // Section elements
+    const profileSection = document.getElementById('profile-section');
+    const eventsSection = document.getElementById('events-section');
+    const eventsContent = document.getElementById('events-section-content');
+    const collectBtn = document.getElementById('collect-events-btn');
+
+    // Utility: Get URL parameters (if needed)
     function getQueryParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(param);
     }
 
-    // Section elements (Profile and Events already exist)
-    const profileSection = document.getElementById('profile-section');
-    const eventsSection = document.getElementById('events-section');
-    const eventsContent = document.getElementById('events-section-content');
-
-    // Function to hide all sections and then show one
+    // Function to hide all sections and show one
     function showSection(section) {
         if (profileSection) profileSection.style.display = 'none';
         if (eventsSection) eventsSection.style.display = 'none';
@@ -22,50 +23,49 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Function to load and display Facebook events
-    function loadEvents() {
-        fetch('/fb-events')
-          .then(response => response.json())
-          .then(data => {
-              // Sort events by start_time (ascending order here, adjust if needed)
-              data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    // Function to load events from the blob
+    function loadBlobEvents() {
+        fetch('/blob-events')
+            .then(response => response.json())
+            .then(data => {
+                eventsContent.innerHTML = '';
+                if (data.error) {
+                    eventsContent.innerHTML = `<p>Error: ${data.error}</p>`;
+                    return;
+                }
+                if (data.length === 0) {
+                    eventsContent.innerHTML = '<p>No events found.</p>';
+                } else {
+                    data.forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.classList.add('event');
+                        const startDate = new Date(event.start_time).toLocaleString();
 
-              // Clear previous content
-              eventsContent.innerHTML = '';
+                        // Include cover image if available
+                        let coverHtml = '';
+                        if (event.cover && event.cover.source) {
+                            coverHtml = `<img src="${event.cover.source}" alt="Event Cover" class="event-cover">`;
+                        }
 
-              if (data.length === 0) {
-                  eventsContent.innerHTML = '<p>No events found.</p>';
-              } else {
-                  data.forEach(event => {
-                    const eventDiv = document.createElement('div');
-                    eventDiv.classList.add('event');
-                    const startDate = new Date(event.start_time).toLocaleString();
-                
-                    // Check if a cover image exists
-                    let coverHtml = '';
-                    if (event.cover && event.cover.source) {
-                        coverHtml = `<img src="${event.cover.source}" alt="Event Cover" class="event-cover">`;
-                    }
-                
-                    eventDiv.innerHTML = `
-                        ${coverHtml}
-                        <h3>${event.name}</h3>
-                        <p><strong>Start:</strong> ${startDate}</p>
-                        <p>${event.description}</p>
-                        <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
-                        <p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>
-                    `;
-                    eventsContent.appendChild(eventDiv);
-                });
-              }
-          })
-          .catch(error => {
-              console.error("Error loading events", error);
-              eventsContent.innerHTML = '<p>Error loading events.</p>';
-          });
+                        eventDiv.innerHTML = `
+                            ${coverHtml}
+                            <h3>${event.name}</h3>
+                            <p><strong>Start:</strong> ${startDate}</p>
+                            <p>${event.description}</p>
+                            <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
+                            <p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>
+                        `;
+                        eventsContent.appendChild(eventDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error loading blob events", error);
+                eventsContent.innerHTML = '<p>Error loading events.</p>';
+            });
     }
 
-    // Your existing button setup...
+    // Set up menu button listeners
     if (isAuthenticated) {
         const menuProfile = document.getElementById('menu-profile');
         const menuEvents = document.getElementById('menu-events');
@@ -78,13 +78,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (menuEvents) {
             menuEvents.style.display = "inline-block";
             menuEvents.addEventListener('click', () => { 
-                // If no Facebook token exists, start the OAuth flow.
-                if (!fbAccessToken) {
-                    window.location.href = "/facebook/login";
-                } else {
-                    showSection('events');
-                    loadEvents();
-                }
+                showSection('events');
+                loadBlobEvents();
             });
         }
         if (menuMerch) {
@@ -98,22 +93,40 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         
-        // Check URL for section parameter and auto-load if needed:
+        // Check if URL has section=events; if so, load events
         const sectionParam = getQueryParam("section");
         if (sectionParam === "events") {
-            // Optionally clear the query parameters from the URL
             history.replaceState(null, "", window.location.pathname);
             showSection('events');
-            loadEvents();
+            loadBlobEvents();
         } else {
-            // Default to profile section
             showSection('profile');
         }
     } else {
         const menuLogin = document.getElementById('menu-login');
         const menuJoin = document.getElementById('menu-join');
-        
         menuLogin.addEventListener('click', () => { window.location.href = '/login'; });
         menuJoin.addEventListener('click', () => { window.location.href = '/pay'; });
+    }
+
+    // Set up the "Collect" button listener to trigger the sync process
+    if (collectBtn) {
+        collectBtn.addEventListener('click', () => {
+            fetch('/sync-public-events')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert("Error syncing events: " + data.error);
+                    } else {
+                        alert(data.message);
+                        // Reload events from blob after sync
+                        loadBlobEvents();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error syncing events", error);
+                    alert("Error syncing events.");
+                });
+        });
     }
 });
