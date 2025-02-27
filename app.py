@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session, flash, redirect
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user  # Import current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
 from square.client import Client
+from urllib.parse import quote
 import msal
 import os, time, requests
 
@@ -128,6 +129,60 @@ def auth_callback():
     
     return "Login failed", 401
 
+@app.route('/facebook/login')
+def facebook_login():
+    print("##### DEBUG ##### In facebook_login()")
+    # Generate a random state value for CSRF protection and store it in the session
+    state = os.urandom(16).hex()
+    session['fb_state'] = state
+
+    # Build the Facebook OAuth URL with required parameters
+    redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")  # e.g., "https://test.oviedojeepclub.com/facebook/callback"
+    params = {
+        "client_id": os.getenv("FACEBOOK_APP_ID"),
+        "redirect_uri": redirect_uri,
+        "state": state,
+        "scope": "pages_read_engagement,pages_read_user_content",
+        "response_type": "code"
+    }
+    # Build the query string from the params dictionary
+    query_string = "&".join(f"{key}={quote(str(value))}" for key, value in params.items())
+    fb_auth_url = f"https://www.facebook.com/v22.0/dialog/oauth?{query_string}"
+    return redirect(fb_auth_url)
+
+@app.route('/facebook/callback')
+def facebook_callback():
+    print("##### DEBUG ##### In facebook_callback()")
+    # Verify the 'state' parameter to protect against CSRF
+    if request.args.get('state') != session.get('fb_state'):
+        return "State mismatch", 400
+
+    code = request.args.get('code')
+    if not code:
+        return "No code provided", 400
+
+    # Exchange the code for an access token
+    token_url = "https://graph.facebook.com/v22.0/oauth/access_token"
+    redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")
+    params = {
+        "client_id": os.getenv("FACEBOOK_APP_ID"),
+        "redirect_uri": redirect_uri,
+        "client_secret": os.getenv("FACEBOOK_APP_SECRET"),
+        "code": code
+    }
+    token_response = requests.get(token_url, params=params)
+    token_data = token_response.json()
+
+    if "access_token" not in token_data:
+        return f"Failed to get access token: {token_data.get('error')}", 400
+
+    fb_access_token = token_data["access_token"]
+    session["fb_access_token"] = fb_access_token  # Store the token in session for later use
+
+    # Optionally, you might want to fetch and store a page access token here using /me/accounts
+    # For now, we redirect the user back to the home page.
+    return redirect(url_for("index"))
+
 @app.route('/login')
 def login():
     print("##### DEBUG ##### In login()")
@@ -160,17 +215,17 @@ def delete_data():
     return render_template('delete_data.html')
 
 @app.route('/fb-events')
+@login_required
 def fb_events():
     print("##### DEBUG ##### In fb_events()")
     FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
-    FACEBOOK_ACCESS_TOKEN = os.getenv("FACEBOOK_ACCESS_TOKEN")
-    
-    events = get_facebook_events(FACEBOOK_PAGE_ID, FACEBOOK_ACCESS_TOKEN)
+
+    fb_token = session.get("fb_access_token")
+    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
     if events is None:
         return jsonify({"error": "Unable to fetch events"}), 500
-    
-    # Sort events by start time in ascending order
-    sorted_events = sort_events_by_date(events)
+
+    sorted_events = sort_events_by_date_desc(events)
     return jsonify(sorted_events)
 
 @app.route("/logout")
@@ -283,7 +338,7 @@ def user_still_exists(user_id):
         return False
 
 def get_facebook_events(page_id, access_token):
-    print(f'##### DEBUG ##### In get_facebook_events with {page_id}')
+    print("##### DEBUG ##### In get_facebook_events()")
     url = f"https://graph.facebook.com/v22.0/{page_id}/events"
     params = {
         "access_token": access_token,
@@ -295,21 +350,21 @@ def get_facebook_events(page_id, access_token):
         if "error" in data:
             print("Facebook API error:", data["error"])
             return None
-        # Return the list of events; Facebook returns events under the 'data' key.
         return data.get("data", [])
     except Exception as e:
         print("Error fetching Facebook events:", e)
         return None
 
-def sort_events_by_date(events):
-    print("##### DEBUG ##### In sort_events_by_date()")
-    # Convert start_time string to datetime objects for proper sorting.
+def sort_events_by_date_desc(events):
+    print("##### DEBUG ##### In sort_events_by_date_desc()")
+    from datetime import datetime
+    # Sort events so that future (newer) events come first (descending order)
     return sorted(
         events,
         key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
         reverse=True
     )
-
+    
 class Main(Resource):
     def post(self):
         return jsonify({'message': 'Welcome to the Oviedo Jeep Club Flask REST App'})
