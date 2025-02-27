@@ -70,8 +70,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (menuEvents) {
             menuEvents.style.display = "inline-block";
             menuEvents.addEventListener('click', () => { 
-                showSection('events'); 
-                loadEvents();
+                // If no Facebook token exists, start the Facebook OAuth flow.
+                if (!fbAccessToken) {
+                    window.location.href = "/facebook/login";
+                } else {
+                    showSection('events');
+                    loadEvents();
+                }
             });
         }
         // Merchandise: open store in a new tab
