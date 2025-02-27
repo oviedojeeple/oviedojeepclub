@@ -7,7 +7,7 @@ from azure.storage.blob import BlobServiceClient
 from square.client import Client
 from urllib.parse import quote
 import msal
-import os, time, requests
+import os, time, requests, json
 
 # Initialize Flask App
 app = Flask(__name__)
