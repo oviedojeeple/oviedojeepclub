@@ -154,6 +154,11 @@ def facebook_login():
     state = os.urandom(16).hex()
     session['fb_state'] = state
 
+    # Store the "next" URL if provided
+    next_url = request.args.get('next')
+    if next_url:
+        session['fb_next'] = next_url
+    
     # Build the Facebook OAuth URL with required parameters
     redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")  # e.g., "https://test.oviedojeepclub.com/facebook/callback"
     params = {
@@ -172,7 +177,6 @@ def facebook_login():
 @login_required
 def facebook_callback():
     print("##### DEBUG ##### In facebook_callback()")
-    # Verify state parameter for security
     if request.args.get('state') != session.get('fb_state'):
         return "State mismatch", 400
 
@@ -194,19 +198,12 @@ def facebook_callback():
     if "access_token" not in token_data:
         return f"Failed to get access token: {token_data.get('error')}", 400
 
-    # Save the access token in session
     session["fb_access_token"] = token_data["access_token"]
 
-    # Immediately trigger the sync process:
-    FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
-    fb_token = token_data["access_token"]
-    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
-    if events:
-        upload_events_to_blob(events)
-    else:
-        print("##### DEBUG ##### In facebook_callback() No events fetched.")
-
-    # Redirect back to index with section=events query parameter.
+    # Redirect to the 'next' URL if provided; otherwise, default to the index with events section.
+    next_url = session.pop('fb_next', None)
+    if next_url:
+        return redirect(next_url)
     return redirect(url_for("index", section="events"))
 
 @app.route('/login')
@@ -305,8 +302,12 @@ def square_webhook():
 @app.route('/sync-public-events')
 def sync_public_events():
     print("##### DEBUG ##### In sync_public_events()")
-    # Use the fallback (long-lived) page access token from your environment.
-    fb_token = os.getenv("FACEBOOK_ACCESS_TOKEN")
+    # Check if the session has a Facebook token
+    fb_token = session.get("fb_access_token")
+    if not fb_token:
+        # Redirect to Facebook login with a next parameter
+        return redirect(url_for("facebook_login", next=url_for("sync_public_events")))
+    
     FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
     events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
     if events is None:
