@@ -3,6 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
+from azure.storage.blob import BlobServiceClient
 from square.client import Client
 from urllib.parse import quote
 import msal
@@ -154,6 +155,7 @@ def facebook_login():
 @app.route('/facebook/callback')
 @login_required
 def facebook_callback():
+    print("##### DEBUG ##### In facebook_callback()")
     # Verify state parameter for security
     if request.args.get('state') != session.get('fb_state'):
         return "State mismatch", 400
@@ -178,6 +180,15 @@ def facebook_callback():
 
     # Save the access token in session
     session["fb_access_token"] = token_data["access_token"]
+
+    # Immediately trigger the sync process:
+    FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
+    fb_token = token_data["access_token"]
+    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
+    if events:
+        upload_events_to_blob(events)
+    else:
+        print("##### DEBUG ##### In facebook_callback() No events fetched.")
 
     # Redirect back to index with section=events query parameter.
     return redirect(url_for("index", section="events"))
@@ -314,6 +325,20 @@ def _acquire_graph_api_token():
     else:
         print("Error acquiring Graph token:", result.get("error_description"))
         return None
+
+def upload_events_to_blob(events):
+    print("##### DEBUG ##### In upload_events_to_blob()")
+    # Initialize the BlobServiceClient using your connection string.
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_name = "events"  # Ensure this container exists in your Azure storage account.
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob="events.json")
+
+    # Convert the events list to JSON
+    events_json = json.dumps(events)
+    # Upload or overwrite the blob
+    blob_client.upload_blob(events_json, overwrite=True)
+    print("Events successfully uploaded to Azure Blob Storage.")
 
 def user_still_exists(user_id):
     print(f'##### DEBUG ##### In user_still_exists with {user_id}')
