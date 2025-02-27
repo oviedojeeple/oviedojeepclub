@@ -59,6 +59,7 @@
       <p><a href="/privacy">Privacy Policy</a></p>
   </footer>
   <script>
+      var fbAccessToken = {{ session.get("fb_access_token")|tojson|default("null") }};
       var isAuthenticated = {{ user.is_authenticated | tojson }};
   </script>
   <script src="/static/scripts/profile.js"></script>
