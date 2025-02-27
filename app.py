@@ -130,6 +130,22 @@ def auth_callback():
     
     return "Login failed", 401
 
+@app.route('/blob-events')
+def blob_events():
+    print("##### DEBUG ##### In blob_events()")
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        container_name = "events"  # Make sure this container exists.
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob="events.json")
+        events_blob = blob_client.download_blob().readall()
+        events_data = json.loads(events_blob)
+        sorted_events = sort_events_by_date_desc(events_data)
+        return jsonify(sorted_events)
+    except Exception as e:
+        print("Error reading blob events:", e)
+        return jsonify({"error": "Unable to read events from blob"}), 500
+
 @app.route('/facebook/login')
 @login_required
 def facebook_login():
@@ -285,6 +301,19 @@ def square_webhook():
             # Mark user as paid or activate membership
             print("Payment Completed")
     return '', 200
+
+@app.route('/sync-public-events')
+def sync_public_events():
+    print("##### DEBUG ##### In sync_public_events()")
+    # Use the fallback (long-lived) page access token from your environment.
+    fb_token = os.getenv("FACEBOOK_ACCESS_TOKEN")
+    FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
+    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
+    if events is None:
+        return jsonify({"error": "Unable to fetch events from Facebook"}), 500
+    sorted_events = sort_events_by_date_desc(events)
+    upload_events_to_blob(sorted_events)
+    return jsonify({"message": "Public events synced successfully."})
 
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
