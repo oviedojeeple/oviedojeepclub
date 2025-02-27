@@ -199,6 +199,8 @@ def facebook_callback():
         return f"Failed to get access token: {token_data.get('error')}", 400
 
     session["fb_access_token"] = token_data["access_token"]
+    print("##### DEBUG ##### In facebook_callback() fb_access_token in session:", "fb_access_token" in session)
+    session.modified = True
 
     # Redirect to the 'next' URL if provided; otherwise, default to the index with events section.
     next_url = session.pop('fb_next', None)
@@ -244,6 +246,7 @@ def fb_events():
     FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
 
     fb_token = session.get("fb_access_token")
+    print("##### DEBUG ##### In fb_events() fb_access_token in session:", "fb_access_token" in session)
     events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
     if events is None:
         return jsonify({"error": "Unable to fetch events"}), 500
@@ -307,7 +310,8 @@ def sync_public_events():
     if not fb_token:
         # Redirect to Facebook login with a next parameter
         return redirect(url_for("facebook_login", next=url_for("sync_public_events")))
-    
+
+    print("##### DEBUG ##### In sync_public_events() fb_access_token in session:", "fb_access_token" in session)
     FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
     events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
     if events is None:
