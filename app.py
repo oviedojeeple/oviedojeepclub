@@ -130,6 +130,7 @@ def auth_callback():
     return "Login failed", 401
 
 @app.route('/facebook/login')
+@login_required
 def facebook_login():
     print("##### DEBUG ##### In facebook_login()")
     # Generate a random state value for CSRF protection and store it in the session
@@ -151,6 +152,7 @@ def facebook_login():
     return redirect(fb_auth_url)
 
 @app.route('/facebook/callback')
+@login_required
 def facebook_callback():
     print("##### DEBUG ##### In facebook_callback()")
     # Verify the 'state' parameter to protect against CSRF
