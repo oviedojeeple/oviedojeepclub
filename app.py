@@ -150,6 +150,7 @@ def blob_events():
 @app.route('/facebook/callback')
 @login_required
 def facebook_callback():
+    print("##### DEBUG ##### In facebook_callback()")
     # Verify state parameter for security
     if request.args.get('state') != session.get('fb_state'):
         return "State mismatch", 400
@@ -174,8 +175,11 @@ def facebook_callback():
 
     # Save the access token in session
     session["fb_access_token"] = token_data["access_token"]
+    session.modified = True
+
+    # Now fetch events using the token from session
     FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
-    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
+    events = get_facebook_events(FACEBOOK_PAGE_ID, session.get("fb_access_token"))
     if events is None:
         return jsonify({"error": "Unable to fetch events from Facebook"}), 500
     sorted_events = sort_events_by_date_desc(events)
@@ -183,7 +187,7 @@ def facebook_callback():
     
     # Redirect back to index with section=events query parameter.
     return redirect(url_for("index", section="events"))
-
+    
 @app.route('/login')
 def login():
     print("##### DEBUG ##### In login()")
@@ -294,7 +298,6 @@ def sync_public_events():
         "scope": "pages_read_engagement,pages_read_user_content",
         "response_type": "code"
     }
-    # Build the query string from the params dictionary
     query_string = "&".join(f"{key}={quote(str(value))}" for key, value in params.items())
     fb_auth_url = f"https://www.facebook.com/v22.0/dialog/oauth?{query_string}"
     return redirect(fb_auth_url)
