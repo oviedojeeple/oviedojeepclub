@@ -147,37 +147,10 @@ def blob_events():
         print("Error reading blob events:", e)
         return jsonify({"error": "Unable to read events from blob"}), 500
 
-@app.route('/facebook/login')
-@login_required
-def facebook_login():
-    print("##### DEBUG ##### In facebook_login()")
-    # Generate a random state value for CSRF protection and store it in the session
-    state = os.urandom(16).hex()
-    session['fb_state'] = state
-
-    # Store the "next" URL if provided
-    next_url = request.args.get('next')
-    if next_url:
-        session['fb_next'] = next_url
-    
-    # Build the Facebook OAuth URL with required parameters
-    redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")  # e.g., "https://test.oviedojeepclub.com/facebook/callback"
-    params = {
-        "client_id": os.getenv("FACEBOOK_APP_ID"),
-        "redirect_uri": redirect_uri,
-        "state": state,
-        "scope": "pages_read_engagement,pages_read_user_content",
-        "response_type": "code"
-    }
-    # Build the query string from the params dictionary
-    query_string = "&".join(f"{key}={quote(str(value))}" for key, value in params.items())
-    fb_auth_url = f"https://www.facebook.com/v22.0/dialog/oauth?{query_string}"
-    return redirect(fb_auth_url)
-
 @app.route('/facebook/callback')
 @login_required
 def facebook_callback():
-    print("##### DEBUG ##### In facebook_callback()")
+    # Verify state parameter for security
     if request.args.get('state') != session.get('fb_state'):
         return "State mismatch", 400
 
@@ -199,16 +172,16 @@ def facebook_callback():
     if "access_token" not in token_data:
         return f"Failed to get access token: {token_data.get('error')}", 400
 
+    # Save the access token in session
     session["fb_access_token"] = token_data["access_token"]
-    session.modified = True
-
-    # Debug: Print session keys (remove this in production)
-    print("##### DEBUG ##### In facebook_callback() fb_access_token Session keys after callback:", list(session.keys()))
-
-    # Redirect to the 'next' URL if provided; otherwise, default to the index with events section.
-    next_url = session.pop('fb_next', None)
-    if next_url:
-        return redirect(next_url)
+    FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
+    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
+    if events is None:
+        return jsonify({"error": "Unable to fetch events from Facebook"}), 500
+    sorted_events = sort_events_by_date_desc(events)
+    upload_events_to_blob(sorted_events)
+    
+    # Redirect back to index with section=events query parameter.
     return redirect(url_for("index", section="events"))
 
 @app.route('/login')
@@ -308,22 +281,24 @@ def square_webhook():
 @app.route('/sync-public-events')
 def sync_public_events():
     print("##### DEBUG ##### In sync_public_events()")
-    # Debug: print session keys to see if fb_access_token exists
-    print("##### DEBUG ##### In sync_public_events() Session keys in sync_public_events:", list(session.keys()))
-    # Check if the session has a Facebook token
-    fb_token = session.get("fb_access_token")
-    if not fb_token:
-        # Redirect to Facebook login with a next parameter
-        return redirect(url_for("facebook_login", next=url_for("sync_public_events")))
+    # Generate a random state value for CSRF protection and store it in the session
+    state = os.urandom(16).hex()
+    session['fb_state'] = state
 
-    FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
-    events = get_facebook_events(FACEBOOK_PAGE_ID, fb_token)
-    if events is None:
-        return jsonify({"error": "Unable to fetch events from Facebook"}), 500
-    sorted_events = sort_events_by_date_desc(events)
-    upload_events_to_blob(sorted_events)
-    return jsonify({"message": "Public events synced successfully."})
-
+    # Build the Facebook OAuth URL with required parameters
+    redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")  # e.g., "https://test.oviedojeepclub.com/facebook/callback"
+    params = {
+        "client_id": os.getenv("FACEBOOK_APP_ID"),
+        "redirect_uri": redirect_uri,
+        "state": state,
+        "scope": "pages_read_engagement,pages_read_user_content",
+        "response_type": "code"
+    }
+    # Build the query string from the params dictionary
+    query_string = "&".join(f"{key}={quote(str(value))}" for key, value in params.items())
+    fb_auth_url = f"https://www.facebook.com/v22.0/dialog/oauth?{query_string}"
+    return redirect(fb_auth_url)
+    
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
     app = msal.ConfidentialClientApplication(
