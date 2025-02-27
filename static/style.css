@@ -113,6 +113,13 @@ body {
     margin-top: 0;
 }
 
+.event-cover {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
 .form-group {
     display: flex;
     flex-direction: column; /* Align items vertically */
