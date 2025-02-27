@@ -57,6 +57,7 @@ class User(UserMixin):
         self.id = user_id
         self.name = name
         self.email = email
+        self.job_title = job_title
         self.member_expiration_date = member_expiration_date
 
 @login_manager.user_loader
@@ -120,6 +121,7 @@ def auth_callback():
             "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0],
+            "job_title": user_info["jobTitle"],
             "member_expiration_date": member_expiration
         }
         session["user"] = user_data

@@ -42,7 +42,9 @@
           </section>
           <section id="events-section" class="content-section">
               <h2>Oviedo Jeep Club Public Events</h2>
-              <button id="collect-events-btn">Sync Facebook Oviedo Jeep Club Public Events</button>
+              {% if user and user.job_title == 'OJC Board Member' %}
+                <button id="collect-events-btn">Sync Facebook Oviedo Jeep Club Public Events</button>
+              {% endif %}
               <div id="events-section-content">
                   <p>Loading events from Facebook...</p>
               </div>
