@@ -37,18 +37,26 @@ document.addEventListener('DOMContentLoaded', function () {
                   eventsContent.innerHTML = '<p>No events found.</p>';
               } else {
                   data.forEach(event => {
-                      const eventDiv = document.createElement('div');
-                      eventDiv.classList.add('event');
-                      const startDate = new Date(event.start_time).toLocaleString();
-                      eventDiv.innerHTML = `
-                          <h3>${event.name}</h3>
-                          <p><strong>Start:</strong> ${startDate}</p>
-                          <p>${event.description}</p>
-                          <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
-                          <p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>
-                      `;
-                      eventsContent.appendChild(eventDiv);
-                  });
+                    const eventDiv = document.createElement('div');
+                    eventDiv.classList.add('event');
+                    const startDate = new Date(event.start_time).toLocaleString();
+                
+                    // Check if a cover image exists
+                    let coverHtml = '';
+                    if (event.cover && event.cover.source) {
+                        coverHtml = `<img src="${event.cover.source}" alt="Event Cover" class="event-cover">`;
+                    }
+                
+                    eventDiv.innerHTML = `
+                        ${coverHtml}
+                        <h3>${event.name}</h3>
+                        <p><strong>Start:</strong> ${startDate}</p>
+                        <p>${event.description}</p>
+                        <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
+                        <p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>
+                    `;
+                    eventsContent.appendChild(eventDiv);
+                });
               }
           })
           .catch(error => {
