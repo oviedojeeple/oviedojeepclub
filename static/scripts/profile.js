@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Utility: Get URL parameters
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
     // Section elements (Profile and Events already exist)
     const profileSection = document.getElementById('profile-section');
     const eventsSection = document.getElementById('events-section');
@@ -21,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/fb-events')
           .then(response => response.json())
           .then(data => {
-              // Sort events by start_time (ascending)
+              // Sort events by start_time (ascending order here, adjust if needed)
               data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
 
               // Clear previous content
@@ -31,14 +37,9 @@ document.addEventListener('DOMContentLoaded', function () {
                   eventsContent.innerHTML = '<p>No events found.</p>';
               } else {
                   data.forEach(event => {
-                      // Create a container for each event
                       const eventDiv = document.createElement('div');
                       eventDiv.classList.add('event');
-
-                      // Format the start date nicely
                       const startDate = new Date(event.start_time).toLocaleString();
-
-                      // Populate event details
                       eventDiv.innerHTML = `
                           <h3>${event.name}</h3>
                           <p><strong>Start:</strong> ${startDate}</p>
@@ -56,21 +57,20 @@ document.addEventListener('DOMContentLoaded', function () {
           });
     }
 
+    // Your existing button setup...
     if (isAuthenticated) {
-        // Authenticated buttons
         const menuProfile = document.getElementById('menu-profile');
         const menuEvents = document.getElementById('menu-events');
         const menuMerch = document.getElementById('menu-merchandise');
         const menuLogout = document.getElementById('menu-logout');
         
-        // Set up listeners for Profile and Events
         menuProfile.addEventListener('click', () => { 
             showSection('profile'); 
         });
         if (menuEvents) {
             menuEvents.style.display = "inline-block";
             menuEvents.addEventListener('click', () => { 
-                // If no Facebook token exists, start the Facebook OAuth flow.
+                // If no Facebook token exists, start the OAuth flow.
                 if (!fbAccessToken) {
                     window.location.href = "/facebook/login";
                 } else {
@@ -79,32 +79,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
-        // Merchandise: open store in a new tab
         if (menuMerch) {
             menuMerch.addEventListener('click', () => {
                 window.open('https://goinkit.com/oviedo_jeep_club/shop/home', '_blank');
             });
         }
-        // Logout: redirect to /logout
         if (menuLogout) {
             menuLogout.addEventListener('click', () => {
                 window.location.href = '/logout';
             });
         }
-        // Show the profile section on initial load
-        showSection('profile');
+        
+        // Check URL for section parameter and auto-load if needed:
+        const sectionParam = getQueryParam("section");
+        if (sectionParam === "events") {
+            // Optionally clear the query parameters from the URL
+            history.replaceState(null, "", window.location.pathname);
+            showSection('events');
+            loadEvents();
+        } else {
+            // Default to profile section
+            showSection('profile');
+        }
     } else {
-        // Non-authenticated buttons
         const menuLogin = document.getElementById('menu-login');
         const menuJoin = document.getElementById('menu-join');
         
-        // Login button goes to /login
-        menuLogin.addEventListener('click', () => { 
-            window.location.href = '/login'; 
-        });
-        // Join button goes to /pay (membership fee page)
-        menuJoin.addEventListener('click', () => { 
-            window.location.href = '/pay'; 
-        });
+        menuLogin.addEventListener('click', () => { window.location.href = '/login'; });
+        menuJoin.addEventListener('click', () => { window.location.href = '/pay'; });
     }
 });
