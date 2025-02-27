@@ -132,6 +132,7 @@ def auth_callback():
     return "Login failed", 401
 
 @app.route('/blob-events')
+@login_required
 def blob_events():
     print("##### DEBUG ##### In blob_events()")
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
@@ -408,7 +409,6 @@ def sort_events_by_date_desc(events):
     return sorted(
         events,
         key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
-        reverse=True
     )
     
 class Main(Resource):
