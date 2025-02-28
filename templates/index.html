@@ -81,6 +81,7 @@
       var fbAccessToken = {{ session.get("fb_access_token")|tojson|default("null") }};
       var isAuthenticated = {{ user.is_authenticated | tojson }};
   </script>
+  <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
   <script src="/static/scripts/profile.js"></script>
   <script src="/static/scripts/payment.js"></script>
 </body>
