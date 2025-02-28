@@ -6,28 +6,23 @@
 
 <script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
 <script type="text/javascript">
-  // Get Application ID from Flask template variable
-  const applicationId = "{{ application_id }}";
+  document.addEventListener("DOMContentLoaded", async function () {
+    const applicationId = "{{ application_id }}";
+    const locationId = "LBA931MEK4R5V";  // Replace with your actual location ID
 
-  // Initialize Square payments
-  const payments = Square.payments(applicationId, 'sandbox'); // Change to 'production' when ready
-  
-  async function initializeCard() {
+    const payments = Square.payments(applicationId, 'sandbox');
     const card = await payments.card();
     await card.attach('#card-container');
-    return card;
-  }
 
-  const card = await initializeCard();
-
-  document.querySelector('#payment-form').addEventListener('submit', async function (event) {
-    event.preventDefault();
-    const result = await card.tokenize();
-    if (result.status === 'OK') {
-      document.querySelector('#card-nonce').value = result.token;
-      this.submit();
-    } else {
-      console.error(result.errors);
-    }
+    document.querySelector('#payment-form').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const result = await card.tokenize();
+      if (result.status === 'OK') {
+        document.querySelector('#card-nonce').value = result.token;
+        this.submit();
+      } else {
+        console.error(result.errors);
+      }
+    });
   });
 </script>
