@@ -267,8 +267,9 @@ def pay():
             flash('Payment Failed. Please try again.', 'danger')
     
     # Pass Application ID to the template
-    return render_template('pay.html', application_id=SQUARE_APPLICATION_ID)
-
+    application_id = os.getenv('SQUARE_APPLICATION_ID')
+    return render_template('pay.html', application_id=application_id)
+    
 # Privacy Policy Route
 @app.route('/privacy')
 def privacy_policy():
