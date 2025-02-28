@@ -104,12 +104,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     } else {
         const menuLogin = document.getElementById('menu-login');
-        const menuJoin = document.getElementById('menu-join');
+        const joinButton = document.getElementById('join-button');
         menuLogin.addEventListener('click', () => { window.location.href = '/login'; });
-        if (menuJoin) {
-            menuJoin.addEventListener('click', () => { 
-                const modal = document.getElementById("payment-modal");
-                modal.style.display = "block";
+        if (joinButton) {
+            joinButton.addEventListener('click', () => { 
+                // Hide the default prompt and show the join section
+                const defaultPrompt = document.getElementById('default-prompt');
+                if (defaultPrompt) defaultPrompt.style.display = 'none';
+                const joinSection = document.getElementById('join-section');
+                joinSection.style.display = 'block';
             });
         }
     }
