@@ -38,18 +38,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Modal Logic
     const modal = document.getElementById("payment-modal");
-    const joinButton = document.getElementById("join-button");
     const closeModalBtn = document.querySelector(".close-modal");
-
-    joinButton.onclick = function() {
-      modal.style.display = "block";
-    }
-
-    closeModalBtn.onclick = function() {
-      modal.style.display = "none";
-    }
-
-    window.onclick = function(event) {
+    
+    closeModalBtn.onclick = () => modal.style.display = "none";
+    window.onclick = (event) => {
       if (event.target === modal) {
         modal.style.display = "none";
       }

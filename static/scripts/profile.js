@@ -106,7 +106,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const menuLogin = document.getElementById('menu-login');
         const menuJoin = document.getElementById('menu-join');
         menuLogin.addEventListener('click', () => { window.location.href = '/login'; });
-        menuJoin.addEventListener('click', () => { window.location.href = '/pay'; });
+        menuJoin.addEventListener('click', () => { 
+            const modal = document.getElementById("payment-modal");
+            modal.style.display = "block";
+        });
     }
 
     // Set up the "Collect" button listener to trigger the sync process
