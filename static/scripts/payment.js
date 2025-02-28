@@ -37,18 +37,4 @@ document.addEventListener("DOMContentLoaded", async function () {
         console.error(result.errors);
       }
     });
-
-    console.log("Modal Element:", modal);
-    console.log("Close Button:", closeModalBtn);
-
-    // Modal Logic
-    const modal = document.getElementById("payment-modal");
-    const closeModalBtn = document.querySelector(".close-modal");
-    
-    closeModalBtn.onclick = () => modal.style.display = "none";
-    window.onclick = (event) => {
-      if (event.target === modal) {
-        modal.style.display = "none";
-      }
-    }
 });
