@@ -279,7 +279,7 @@ def pay():
         
         if result.is_success():
             flash('Payment Successful! Welcome to Oviedo Jeep Club.', 'success')
-            return redirect(url_for('profile'))
+            return redirect(url_for('index'))
         else:
             flash('Payment Failed. Please try again.', 'danger')
     
