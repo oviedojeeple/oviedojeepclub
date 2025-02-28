@@ -239,7 +239,6 @@ def fb_events():
     return jsonify(sorted_events)
 
 @app.route('/items', methods=['GET'])
-@login_required
 def get_items():
     print("##### DEBUG ##### In get_items()")
     result = client.catalog.list_catalog(types='ITEM')
