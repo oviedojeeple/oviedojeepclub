@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("Payment.js loaded");
-    const applicationId = "{{ application_id }}";
+    const applicationId = window.applicationId;
     const locationId = "LBA931MEK4R5V"; // Replace with your actual location ID
 
     // Initialize Square Payment Form
