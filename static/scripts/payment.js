@@ -11,6 +11,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Fetch and Populate Item Library
     const response = await fetch('/items');
+    if (!response.ok) {
+        console.error("Failed to fetch items:", response.status);
+        // Handle unauthorized access accordingly (perhaps show a message or hide the item selector)
+        return;
+    }
     const items = await response.json();
     const selector = document.getElementById('item-selector');
     
