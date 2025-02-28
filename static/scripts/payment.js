@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", async function () {
+    console.log("Payment.js loaded");
     const applicationId = "{{ application_id }}";
     const locationId = "LBA931MEK4R5V"; // Replace with your actual location ID
 
@@ -35,6 +36,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         console.error(result.errors);
       }
     });
+
+    console.log("Modal Element:", modal);
+    console.log("Close Button:", closeModalBtn);
 
     // Modal Logic
     const modal = document.getElementById("payment-modal");
