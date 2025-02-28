@@ -34,6 +34,11 @@
               <table class="profile-details">
                 <tr><td>Name</td><td>{{ user.name }}</td></tr>
                 <tr><td>Email</td><td>{{ user.email }}</td></tr>
+                {% if user and user.job_title == 'OJC Board Member' %}
+                  <tr><td>OJC Role</td><td>{{ user.job_title }}</td></tr>
+                {% else %}
+                  <tr><td>OJC Role</td><td>OJC Member</td></tr>
+                {% endif %}
                   <tr>
                     <td>Expiration Date</td>
                     <td>{{ user.member_expiration_date }}</td>
@@ -50,40 +55,40 @@
               </div>
           </section>
       {% else %}
-          <!-- Show a prompt if not authenticated -->
-          <section id="login-prompt">
-              <p>Please log in to view your profile and events.</p>
+          <!-- Default Prompt for Unauthenticated Users -->
+          <section id="default-prompt">
+              <p>Please log in or click Join to participate in the club.</p>
+          </section>
+          <!-- Hidden Join Section; becomes visible when "Join" is clicked -->
+          <section id="join-section" style="display: none;">
+              <h2>Join Oviedo Jeep Club</h2>
+              <p>Please select a membership type and complete your payment to join.</p>
+              <select id="item-selector">
+                <option value="">Select Membership Type</option>
+              </select>
+              <form id="payment-form" method="post" action="/pay">
+                <div id="card-container"></div>
+                <button id="card-button" type="submit">Pay Membership Fee</button>
+                <input type="hidden" name="nonce" id="card-nonce">
+              </form>
           </section>
       {% endif %}
   </main>
-
-    <!-- Modal Structure -->
-  <div id="payment-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-      <h2>Membership Payment</h2>
-      <select id="item-selector">
-        <option value="">Select Membership Type</option>
-      </select>
-      <form id="payment-form" method="post">
-        <div id="card-container"></div>
-        <button id="card-button" type="submit">Pay</button>
-        <input type="hidden" name="nonce" id="card-nonce">
-      </form>
-    </div>
-  </div>
   
   <footer>
       <p>© 2025 Oviedo Jeep Club. All rights reserved.</p>
       <p><a href="/privacy">Privacy Policy</a></p>
   </footer>
+  <!-- Pass Application ID from Flask -->
   <script>
       var fbAccessToken = {{ session.get("fb_access_token")|tojson|default("null") }};
       var isAuthenticated = {{ user.is_authenticated | tojson }};
       const applicationId = "{{ application_id }}";
+      window.applicationId = applicationId;
   </script>
-  <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
-  <script src="/static/scripts/payment.js"></script>
-  <script src="/static/scripts/profile.js"></script>
+  <!-- Load Square JS and other scripts -->
+  <script src="https://sandbox.web.squarecdn.com/v1/square.js" defer></script>
+  <script src="/static/scripts/payment.js" defer></script>
+  <script src="/static/scripts/profile.js" defer></script>
 </body>
 </html>
