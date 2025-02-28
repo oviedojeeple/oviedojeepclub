@@ -237,6 +237,18 @@ def fb_events():
     sorted_events = sort_events_by_date_desc(events)
     return jsonify(sorted_events)
 
+@app.route('/items', methods=['GET'])
+@login_required
+def get_items():
+    print("##### DEBUG ##### In get_items()")
+    result = client.catalog.list_catalog(types='ITEM')
+    if result.is_success():
+        items = result.body['objects']
+        return jsonify(items)
+    else:
+        return jsonify({'error': 'Unable to fetch items'}), 500
+
+
 @app.route("/logout")
 @login_required
 def logout():
