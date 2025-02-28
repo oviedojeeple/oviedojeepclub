@@ -39,11 +39,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Modal Logic
     const modal = document.getElementById("payment-modal");
     const closeModalBtn = document.querySelector(".close-modal");
-
-    closeModalBtn.onclick = function() {
-      modal.style.display = "none";
+    
+    closeModalBtn.onclick = () => modal.style.display = "none";
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
     }
-
     window.onclick = function(event) {
       if (event.target === modal) {
         modal.style.display = "none";
