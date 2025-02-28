@@ -83,7 +83,8 @@ def validate_user_session():
 @app.route('/')
 def index():
     print("##### DEBUG ##### In index()")
-    return render_template('index.html', user=current_user)  # Pass current_user to the template
+    application_id = os.getenv('SQUARE_APPLICATION_ID')
+    return render_template('index.html', application_id=application_id, user=current_user)
 
 @app.route('/auth/callback')
 def auth_callback():
