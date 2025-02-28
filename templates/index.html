@@ -22,7 +22,7 @@
       <button id="menu-logout" class="nav-btn">Logout</button>
     {% else %}
       <button id="menu-login" class="nav-btn">Login</button>
-      <button id="menu-join" class="nav-btn">Join</button>
+      <button id="join-button" class="nav-btn">Join</button>
     {% endif %}
   </nav>
   
@@ -57,6 +57,22 @@
       {% endif %}
   </main>
 
+    <!-- Modal Structure -->
+  <div id="payment-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h2>Membership Payment</h2>
+      <select id="item-selector">
+        <option value="">Select Membership Type</option>
+      </select>
+      <form id="payment-form" method="post">
+        <div id="card-container"></div>
+        <button id="card-button" type="submit">Pay</button>
+        <input type="hidden" name="nonce" id="card-nonce">
+      </form>
+    </div>
+  </div>
+  
   <footer>
       <p>© 2025 Oviedo Jeep Club. All rights reserved.</p>
       <p><a href="/privacy">Privacy Policy</a></p>
@@ -66,5 +82,6 @@
       var isAuthenticated = {{ user.is_authenticated | tojson }};
   </script>
   <script src="/static/scripts/profile.js"></script>
+  <script src="/static/scripts/payment.js"></script>
 </body>
 </html>
