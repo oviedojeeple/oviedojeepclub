@@ -248,6 +248,11 @@ def get_items():
     else:
         return jsonify({'error': 'Unable to fetch items'}), 500
 
+@app.route('/join')
+def join():
+    print("##### DEBUG ##### In join()")
+    application_id = os.getenv('SQUARE_APPLICATION_ID')
+    return render_template('index.html', application_id=application_id)
 
 @app.route("/logout")
 @login_required
