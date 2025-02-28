@@ -52,6 +52,23 @@ body {
     background-color: #999; /* Highlight active button */
 }
 
+/* Add these rules to style.css */
+#join-section {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 500px;
+    background: #f9f9f9;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+#card-container {
+    margin: 0 auto;
+    max-width: 500px;
+    width: 80%;
+}
+
 #profile-section,
 #events-section,
 
