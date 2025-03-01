@@ -9,34 +9,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = await payments.card();
     await card.attach('#card-container');
 
-    // Fetch and Populate Item Library
-    const response = await fetch('/items');
-    if (!response.ok) {
-        console.error("Failed to fetch items:", response.status);
-        // Handle unauthorized access accordingly (perhaps show a message or hide the item selector)
-        return;
-    }
-    const items = await response.json();
-    const selector = document.getElementById('item-selector');
-    
-    items.forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.id;
-      option.text = item.item_data.name;
-      selector.appendChild(option);
-    });
-
     // Handle Payment Form Submission
     document.querySelector('#payment-form').addEventListener('submit', async function (event) {
       event.preventDefault();
-      const itemId = document.getElementById('item-selector').value;
-      if (!itemId) {
-        alert("Please select a membership type.");
+      
+      // Retrieve user input fields
+      const email = document.getElementById('email').value;
+      const displayName = document.getElementById('displayName').value;
+      
+      if (!email || !displayName) {
+        alert("Please provide both your email and display name.");
         return;
       }
+      
       const result = await card.tokenize();
       if (result.status === 'OK') {
         document.querySelector('#card-nonce').value = result.token;
+        // Optionally, you could append the email and displayName as hidden fields too.
+        // Then, allow the form to submit.
         this.submit();
       } else {
         console.error(result.errors);
