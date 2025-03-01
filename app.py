@@ -279,13 +279,52 @@ def pay():
         
         if result.is_success():
             flash('Payment Successful! Welcome to Oviedo Jeep Club.', 'success')
-            return redirect(url_for('index'))
+            # Set flag indicating payment was successful
+            session["payment_confirmed"] = True
+            return redirect(url_for('after_payment'))
         else:
             flash('Payment Failed. Please try again.', 'danger')
     
-    # Pass Application ID to the template
     application_id = os.getenv('SQUARE_APPLICATION_ID')
     return render_template('pay.html', application_id=application_id)
+
+@app.route('/after-payment')
+def after_payment():
+    # Ensure this route is only accessed after a successful payment
+    if not session.get("payment_confirmed"):
+        flash("Payment not confirmed. Please complete the payment process.", "danger")
+        return redirect(url_for('index'))
+    
+    # Remove the flag to prevent reuse
+    session.pop("payment_confirmed", None)
+    
+    # Calculate the join date (current time) and the expiration date
+    join_date = int(datetime.datetime.now().timestamp())
+    expiration_date = compute_expiration_date()  # Your helper function as defined earlier
+    
+    # Build the state payload with only the dates
+    state_payload = {
+        "joinDate": join_date,
+        "expirationDate": expiration_date
+    }
+    
+    # Encode the state payload (optional, for security and brevity)
+    import json, base64
+    state_encoded = base64.urlsafe_b64encode(json.dumps(state_payload).encode()).decode()
+    
+    # Construct the B2C signup URL with the encoded state
+    b2c_signup_url = (
+        "https://<your-tenant>.b2clogin.com/<your-tenant>.onmicrosoft.com/"
+        "B2C_1_SIGNUP/oauth2/v2.0/authorize?"
+        "client_id={client_id}&response_type=id_token&redirect_uri={redirect_uri}"
+        "&scope=openid&state={state}&nonce=defaultNonce"
+    ).format(
+        client_id=os.getenv("AZURE_CLIENT_ID"),
+        redirect_uri=quote(os.getenv("AZURE_REDIRECT_URI")),
+        state=state_encoded
+    )
+    
+    return redirect(b2c_signup_url)
     
 # Privacy Policy Route
 @app.route('/privacy')
@@ -362,6 +401,19 @@ def _acquire_graph_api_token():
     else:
         print("Error acquiring Graph token:", result.get("error_description"))
         return None
+        
+def compute_expiration_date():
+    now = datetime.datetime.now()
+    current_year = now.year
+    # Create a datetime for October 31st of the current year
+    oct_31 = datetime.datetime(current_year, 10, 31)
+    if now > oct_31:
+        # If after October 31, expiration is March 31st of the year after next
+        expiration = datetime.datetime(current_year + 2, 3, 31)
+    else:
+        # Otherwise, expiration is March 31st of next year
+        expiration = datetime.datetime(current_year + 1, 3, 31)
+    return int(expiration.timestamp())
 
 def upload_events_to_blob(events):
     print("##### DEBUG ##### In upload_events_to_blob()")
