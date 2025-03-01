@@ -70,6 +70,10 @@ def load_user(user_id):
         return User(**user_data)
     return None
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/x-icon')
 @app.before_request
 def validate_user_session():
     print("##### DEBUG ##### In validate_user_session()")
