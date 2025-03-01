@@ -407,7 +407,7 @@ def _acquire_graph_api_token():
         return None
         
 def compute_expiration_date():
-    now = datetime.now()
+    now = datetime.now()  # Correct: using datetime.now(), not datetime.datetime.now()
     current_year = now.year
     oct_31 = datetime(current_year, 10, 31)
     if now > oct_31:
