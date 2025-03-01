@@ -271,8 +271,13 @@ def pay():
     print("##### DEBUG ##### In pay()")
     if request.method == 'POST':
         amount = 5000  # Membership Fee (e.g., $50.00)
+        nonce = request.form.get('nonce')
+        email = request.form.get('email')
+        display_name = request.form.get('displayName')
+        
+        # Process Square Payment
         body = {
-            "source_id": request.form['nonce'],
+            "source_id": nonce,
             "amount_money": {
                 "amount": amount,
                 "currency": "USD"
@@ -282,53 +287,26 @@ def pay():
         result = client.payments.create_payment(body)
         
         if result.is_success():
-            flash('Payment Successful! Welcome to Oviedo Jeep Club.', 'success')
-            # Set flag indicating payment was successful
-            session["payment_confirmed"] = True
-            return redirect(url_for('after_payment'))
+            flash('Payment Successful! Creating your account...', 'success')
+            
+            # Compute dates:
+            join_date = int(datetime.now().timestamp())
+            expiration_date = compute_expiration_date()  # Your helper function
+            
+            # Now, call a function to create the user account in Azure AD B2C via Microsoft Graph
+            try:
+                created_user = create_b2c_user(email, display_name, join_date, expiration_date)
+                flash('Account created successfully. Please sign in.', 'success')
+            except Exception as e:
+                flash(f'Error creating account: {e}', 'danger')
+                # Optionally, log the error or roll back the payment if needed.
+            
+            return redirect(url_for('index'))
         else:
             flash('Payment Failed. Please try again.', 'danger')
     
     application_id = os.getenv('SQUARE_APPLICATION_ID')
     return render_template('pay.html', application_id=application_id)
-
-@app.route('/after-payment')
-def after_payment():
-    # Ensure this route is only accessed after a successful payment
-    if not session.get("payment_confirmed"):
-        flash("Payment not confirmed. Please complete the payment process.", "danger")
-        return redirect(url_for('index'))
-    
-    # Remove the flag to prevent reuse
-    session.pop("payment_confirmed", None)
-    
-    # Calculate the join date (current time) and the expiration date
-    join_date = int(datetime.now().timestamp())
-    expiration_date = compute_expiration_date()  # Your helper function as defined earlier
-    
-    # Build the state payload with only the dates
-    state_payload = {
-        "joinDate": join_date,
-        "expirationDate": expiration_date
-    }
-    
-    # Encode the state payload (optional, for security and brevity)
-    import json, base64
-    state_encoded = base64.urlsafe_b64encode(json.dumps(state_payload).encode()).decode()
-    
-    # Construct the B2C signup URL with the encoded state
-    b2c_signup_url = (
-        "https://<your-tenant>.b2clogin.com/<your-tenant>.onmicrosoft.com/"
-        "B2C_1_SIGNUP/oauth2/v2.0/authorize?"
-        "client_id={client_id}&response_type=id_token&redirect_uri={redirect_uri}"
-        "&scope=openid&state={state}&nonce=defaultNonce"
-    ).format(
-        client_id=os.getenv("AZURE_CLIENT_ID"),
-        redirect_uri=quote(os.getenv("AZURE_REDIRECT_URI")),
-        state=state_encoded
-    )
-    
-    return redirect(b2c_signup_url)
     
 # Privacy Policy Route
 @app.route('/privacy')
@@ -417,6 +395,70 @@ def compute_expiration_date():
         # On or before October 31, expiration is March 31st of next year
         expiration = datetime(current_year + 1, 3, 31)
     return int(expiration.timestamp())
+
+def create_b2c_user(email, display_name, join_date, expiration_date):
+    # Acquire an access token for Microsoft Graph
+    tenant_id = os.getenv("AZURE_TENANT_ID")
+    client_id = os.getenv("AZURE_CLIENT_ID")
+    client_secret = os.getenv("AZURE_CLIENT_SECRET")
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    scope = ["https://graph.microsoft.com/.default"]
+    
+    app_msal = msal.ConfidentialClientApplication(client_id, authority=authority, client_credential=client_secret)
+    result = app_msal.acquire_token_for_client(scopes=scope)
+    if "access_token" not in result:
+        raise Exception("Error acquiring Graph token: " + result.get("error_description", "Unknown error"))
+    token = result["access_token"]
+    
+    # Generate a temporary random password if needed
+    temp_password = generate_temporary_password()  # Implement this helper
+    
+    # Normalize email for userPrincipalName, if needed.
+    mail_nickname = email.replace("@", "_at_")
+    expected_upn = f"{mail_nickname}@oviedojeepclub.onmicrosoft.com"
+    
+    # Build payload for creating the user.
+    user_payload = {
+        "accountEnabled": True,
+        "displayName": display_name,
+        "userPrincipalName": expected_upn,
+        "mailNickname": mail_nickname,
+        "passwordProfile": {
+            "forceChangePasswordNextSignIn": True,
+            "password": temp_password
+        },
+        "identities": [
+            {
+                "signInType": "emailAddress",
+                "issuer": "oviedojeepclub.onmicrosoft.com",
+                "issuerAssignedId": email
+            }
+        ]
+    }
+    
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post("https://graph.microsoft.com/v1.0/users", headers=headers, json=user_payload)
+    if response.status_code == 201:
+        created_user = response.json()
+        
+        # Optionally, update custom extension attributes (joinDate and expirationDate)
+        update_payload = {
+            "otherMails": [email],
+            "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberJoinedDate": join_date,
+            "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate": expiration_date
+        }
+        update_response = requests.patch(f"https://graph.microsoft.com/v1.0/users/{created_user['id']}",
+                                         headers=headers, json=update_payload)
+        if update_response.status_code not in [200, 204]:
+            raise Exception("Error updating user custom attributes: " + update_response.text)
+        
+        return created_user
+    else:
+        raise Exception("Error creating user: " + response.text)
 
 def upload_events_to_blob(events):
     print("##### DEBUG ##### In upload_events_to_blob()")

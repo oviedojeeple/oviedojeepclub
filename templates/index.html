@@ -62,18 +62,25 @@
           </section>
           <!-- Hidden Join Section; becomes visible when "Join" is clicked -->
           <section id="join-section" style="display: none;">
-              <h2>Join Oviedo Jeep Club</h2>
-              <p>Please select a membership type and complete your payment to join.</p>
-              <select id="item-selector">
-                <option value="">Select Membership Type</option>
-              </select>
-              <form id="payment-form" method="post" action="/pay">
-                <div id="card-container"></div>
-                <button id="card-button" type="submit">Pay Membership Fee</button>
-                <input type="hidden" name="nonce" id="card-nonce">
-              </form>
+            <h2>Join Oviedo Jeep Club</h2>
+            <p>Membership: <strong>Oviedo Jeep Club Membership</strong></p>
+            <p>Cost: <strong>$50.00</strong></p>
+            <form id="payment-form" method="post" action="/pay">
+              <!-- Add fields to collect email and display name -->
+              <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+              </div>
+              <div class="form-group">
+                <label for="displayName">Display Name:</label>
+                <input type="text" id="displayName" name="displayName" required>
+              </div>
+              <div id="card-container"></div>
+              <button id="card-button" type="submit">Pay Membership Fee</button>
+              <input type="hidden" name="nonce" id="card-nonce">
+            </form>
           </section>
-      {% endif %}
+    {% endif %}
   </main>
   
   <footer>
