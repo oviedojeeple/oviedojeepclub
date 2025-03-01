@@ -299,7 +299,7 @@ def after_payment():
     session.pop("payment_confirmed", None)
     
     # Calculate the join date (current time) and the expiration date
-    join_date = int(datetime.datetime.now().timestamp())
+    join_date = int(datetime.now().timestamp())
     expiration_date = compute_expiration_date()  # Your helper function as defined earlier
     
     # Build the state payload with only the dates
