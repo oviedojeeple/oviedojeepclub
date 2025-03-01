@@ -407,16 +407,15 @@ def _acquire_graph_api_token():
         return None
         
 def compute_expiration_date():
-    now = datetime.datetime.now()
+    now = datetime.now()
     current_year = now.year
-    # Create a datetime for October 31st of the current year
-    oct_31 = datetime.datetime(current_year, 10, 31)
+    oct_31 = datetime(current_year, 10, 31)
     if now > oct_31:
-        # If after October 31, expiration is March 31st of the year after next
-        expiration = datetime.datetime(current_year + 2, 3, 31)
+        # After October 31, expiration is March 31st of the year after next
+        expiration = datetime(current_year + 2, 3, 31)
     else:
-        # Otherwise, expiration is March 31st of next year
-        expiration = datetime.datetime(current_year + 1, 3, 31)
+        # On or before October 31, expiration is March 31st of next year
+        expiration = datetime(current_year + 1, 3, 31)
     return int(expiration.timestamp())
 
 def upload_events_to_blob(events):
