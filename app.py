@@ -200,6 +200,7 @@ def facebook_callback():
 @app.route('/login')
 def login():
     print("##### DEBUG ##### In login()")
+    session.clear()  # Clear the session
     session["flow"] = _build_auth_code_flow()
     return redirect(session["flow"]["auth_uri"])
 
