@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             this.submit(); // Submit the form to /pay
         } else {
             console.error(result.errors);
+            displayClientFlash("Error processing payment details. Please try again.", "danger");
         }
     });
 });
