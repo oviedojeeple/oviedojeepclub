@@ -307,10 +307,13 @@ def pay():
                 flash(f'Error creating account: {e}', 'danger')
                 print("##### DEBUG ##### Error creating account:", e)
             
-            return redirect(url_for('index'))
+            # Instead of redirecting, re-render the index with join section visible.
+            application_id = os.getenv('SQUARE_APPLICATION_ID')
+            return render_template('index.html', application_id=application_id, user=current_user, joinVisible=True)
         else:
             flash('Payment Failed. Please try again.', 'danger')
-            return redirect(url_for('index'))
+            application_id = os.getenv('SQUARE_APPLICATION_ID')
+            return render_template('index.html', application_id=application_id, user=current_user, joinVisible=True)
     
     # For GET requests, simply redirect to the index page.
     return redirect(url_for('index'))
