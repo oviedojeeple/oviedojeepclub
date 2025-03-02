@@ -14,6 +14,16 @@ body {
     height: auto; /* Maintain aspect ratio */
 }
 
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.form-row .form-group {
+    flex: 1;
+}
+
 .menu {
     display: flex; /* Ensure buttons are horizontally aligned */
     justify-content: center; /* Center align the menu items */
