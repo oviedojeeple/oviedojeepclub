@@ -277,6 +277,13 @@ def pay():
         email = request.form.get('email')
         display_name = request.form.get('displayName')
         password = request.form.get('password')
+
+        # Check if the user already exists
+        if user_still_exists(email):
+            flash("A user with this email already exists. Please use Login.", "danger")
+            # Optionally, you could pass joinVisible=True to keep the join form visible.
+            application_id = os.getenv('SQUARE_APPLICATION_ID')
+            return render_template('index.html', application_id=application_id, user=current_user, joinVisible=True)
         
         # Process Square Payment
         body = {
