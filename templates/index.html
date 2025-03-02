@@ -65,9 +65,11 @@
                 <h2>Join Oviedo Jeep Club</h2>
                 <p>Membership: <strong>Oviedo Jeep Club Membership</strong></p>
                 <p>Cost: <strong>$50.00</strong></p>
+                <!-- Flash messages container -->
+                <div id="flash-messages"></div>
                 {% with messages = get_flashed_messages(with_categories=true) %}
                   {% if messages %}
-                    <div id="flash-messages">
+                    <div id="server-flash-messages">
                       {% for category, message in messages %}
                         <div class="flash-message flash-{{ category }}">
                           {{ message }}
