@@ -11,25 +11,28 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Handle Payment Form Submission
     document.querySelector('#payment-form').addEventListener('submit', async function (event) {
-      event.preventDefault();
-      
-      // Retrieve user input fields
-      const email = document.getElementById('email').value;
-      const displayName = document.getElementById('displayName').value;
-      
-      if (!email || !displayName) {
-        alert("Please provide both your email and display name.");
-        return;
-      }
-      
-      const result = await card.tokenize();
-      if (result.status === 'OK') {
-        document.querySelector('#card-nonce').value = result.token;
-        // Optionally, you could append the email and displayName as hidden fields too.
-        // Then, allow the form to submit.
-        this.submit();
-      } else {
-        console.error(result.errors);
-      }
+        event.preventDefault();
+        
+        // Retrieve user input values
+        const email = document.getElementById('email').value;
+        const displayName = document.getElementById('displayName').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        // Basic client-side check: ensure password and confirmation match.
+        if (password !== confirmPassword) {
+            alert("Passwords do not match. Please re-enter.");
+            return;
+        }
+        
+        // Optionally, you could also validate the password using JavaScript regex,
+        // but the HTML pattern attribute should enforce it in supporting browsers.
+        const result = await card.tokenize();
+        if (result.status === 'OK') {
+            document.querySelector('#card-nonce').value = result.token;
+            this.submit(); // Submit the form to /pay
+        } else {
+            console.error(result.errors);
+        }
     });
 });
