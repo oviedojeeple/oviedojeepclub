@@ -285,12 +285,14 @@ def pay():
             "idempotency_key": os.urandom(12).hex()
         }
         result = client.payments.create_payment(body)
+        print("##### DEBUG ##### In pay() result of payment: ", result)
         
         if result.is_success():
             flash('Payment Successful! Creating your account...', 'success')
             join_date = int(datetime.now().timestamp())
             expiration_date = compute_expiration_date()
             try:
+                print("##### DEBUG ##### In pay() about to create user with: ", email, display_name, password, join_date, expiration_datet)
                 created_user = create_b2c_user(email, display_name, password, join_date, expiration_date)
                 flash('Account created successfully. Please sign in.', 'success')
             except Exception as e:
@@ -379,6 +381,7 @@ def _acquire_graph_api_token():
         return None
         
 def compute_expiration_date():
+    print("##### DEBUG ##### In compute_expiration_date()")
     now = datetime.now()  # Correct: using datetime.now(), not datetime.datetime.now()
     current_year = now.year
     oct_31 = datetime(current_year, 10, 31)
@@ -391,7 +394,7 @@ def compute_expiration_date():
     return int(expiration.timestamp())
 
 def create_b2c_user(email, display_name, password, join_date, expiration_date):
-    print("Attempting to create B2C user with:", email, display_name, join_date, expiration_date)
+    print("##### DEBUG ##### In create_b2c_user() Attempting to create B2C user with:", email, display_name, join_date, expiration_date)
     tenant_id = os.getenv("AZURE_TENANT_ID")
     client_id = os.getenv("AZURE_CLIENT_ID")
     client_secret = os.getenv("AZURE_CLIENT_SECRET")
