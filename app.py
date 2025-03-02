@@ -126,7 +126,7 @@ def auth_callback():
             "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0],
-            "job_title": user_info["jobTitle"],
+            "user_job_title": user_info.get("jobTitle", "OJC Member"),
             "member_expiration_date": member_expiration
         }
         session["user"] = user_data
