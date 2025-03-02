@@ -274,8 +274,8 @@ def pay():
         nonce = request.form.get('nonce')
         email = request.form.get('email')
         display_name = request.form.get('displayName')
+        password = request.form.get('password')
         
-        # Process Square Payment
         body = {
             "source_id": nonce,
             "amount_money": {
@@ -288,25 +288,19 @@ def pay():
         
         if result.is_success():
             flash('Payment Successful! Creating your account...', 'success')
-            
-            # Compute dates:
             join_date = int(datetime.now().timestamp())
-            expiration_date = compute_expiration_date()  # Your helper function
-            
-            # Now, call a function to create the user account in Azure AD B2C via Microsoft Graph
+            expiration_date = compute_expiration_date()
             try:
-                created_user = create_b2c_user(email, display_name, join_date, expiration_date)
+                created_user = create_b2c_user(email, display_name, password, join_date, expiration_date)
                 flash('Account created successfully. Please sign in.', 'success')
             except Exception as e:
                 flash(f'Error creating account: {e}', 'danger')
-                # Optionally, log the error or roll back the payment if needed.
-            
             return redirect(url_for('index'))
         else:
             flash('Payment Failed. Please try again.', 'danger')
     
-    application_id = os.getenv('SQUARE_APPLICATION_ID')
-    return render_template('pay.html', application_id=application_id)
+    # For GET requests, simply redirect to the index page.
+    return redirect(url_for('index'))
     
 # Privacy Policy Route
 @app.route('/privacy')
@@ -396,8 +390,8 @@ def compute_expiration_date():
         expiration = datetime(current_year + 1, 3, 31)
     return int(expiration.timestamp())
 
-def create_b2c_user(email, display_name, join_date, expiration_date):
-    # Acquire an access token for Microsoft Graph
+def create_b2c_user(email, display_name, password, join_date, expiration_date):
+    print("Attempting to create B2C user with:", email, display_name, join_date, expiration_date)
     tenant_id = os.getenv("AZURE_TENANT_ID")
     client_id = os.getenv("AZURE_CLIENT_ID")
     client_secret = os.getenv("AZURE_CLIENT_SECRET")
@@ -410,22 +404,18 @@ def create_b2c_user(email, display_name, join_date, expiration_date):
         raise Exception("Error acquiring Graph token: " + result.get("error_description", "Unknown error"))
     token = result["access_token"]
     
-    # Generate a temporary random password if needed
-    temp_password = generate_temporary_password()  # Implement this helper
-    
-    # Normalize email for userPrincipalName, if needed.
+    # Normalize email for userPrincipalName
     mail_nickname = email.replace("@", "_at_")
     expected_upn = f"{mail_nickname}@oviedojeepclub.onmicrosoft.com"
     
-    # Build payload for creating the user.
     user_payload = {
         "accountEnabled": True,
         "displayName": display_name,
         "userPrincipalName": expected_upn,
         "mailNickname": mail_nickname,
         "passwordProfile": {
-            "forceChangePasswordNextSignIn": True,
-            "password": temp_password
+            "forceChangePasswordNextSignIn": False,  # since user set their own password, they may not need a forced change
+            "password": password
         },
         "identities": [
             {
@@ -442,10 +432,10 @@ def create_b2c_user(email, display_name, join_date, expiration_date):
     }
     
     response = requests.post("https://graph.microsoft.com/v1.0/users", headers=headers, json=user_payload)
+    print("Graph API create user response:", response.status_code, response.text)
     if response.status_code == 201:
         created_user = response.json()
-        
-        # Optionally, update custom extension attributes (joinDate and expirationDate)
+        # Optionally update custom extension attributes:
         update_payload = {
             "otherMails": [email],
             "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberJoinedDate": join_date,
@@ -455,7 +445,6 @@ def create_b2c_user(email, display_name, join_date, expiration_date):
                                          headers=headers, json=update_payload)
         if update_response.status_code not in [200, 204]:
             raise Exception("Error updating user custom attributes: " + update_response.text)
-        
         return created_user
     else:
         raise Exception("Error creating user: " + response.text)
