@@ -492,11 +492,9 @@ def upload_events_to_blob(events):
     blob_client.upload_blob(events_json, overwrite=True)
     print("##### DEBUG ##### In upload_events_to_blob() Events successfully uploaded to Azure Blob Storage.")
 
-def user_still_exists(user_id):
-    print(f'##### DEBUG ##### In user_still_exists with {user_id}')
-    """
-    Checks if a user with the expected userPrincipalName exists.
-    """
+def user_still_exists(email):
+    print(f'##### DEBUG ##### In user_still_exists with {email}')
+    # Checks if a user with the expected userPrincipalName exists.
     token = _acquire_graph_api_token()
     if not token:
         # For safety, if we cannot get a token, assume user does not exist.
