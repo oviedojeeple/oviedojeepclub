@@ -9,6 +9,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = await payments.card();
     await card.attach('#card-container');
 
+    // Helper function to display flash messages
+    function displayClientFlash(message, category = 'danger') {
+        const container = document.getElementById('flash-messages');
+        container.innerHTML = `<div class="flash-message flash-${category}">${message}</div>`;
+    }
+
     // Handle Payment Form Submission
     document.querySelector('#payment-form').addEventListener('submit', async function (event) {
         event.preventDefault();
@@ -21,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         
         // Basic client-side check: ensure password and confirmation match.
         if (password !== confirmPassword) {
-            alert("Passwords do not match. Please re-enter.");
+            displayClientFlash("Passwords do not match. Please re-enter.", "danger");
             return;
         }
         
