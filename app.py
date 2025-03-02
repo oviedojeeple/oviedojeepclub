@@ -494,24 +494,30 @@ def upload_events_to_blob(events):
 
 def user_still_exists(user_id):
     print(f'##### DEBUG ##### In user_still_exists with {user_id}')
-    # Acquire an access token for the Microsoft Graph API
+    """
+    Checks if a user with the expected userPrincipalName exists.
+    """
     token = _acquire_graph_api_token()
     if not token:
-        # If you can't get a token, treat the user as non-existent to be safe.
+        # For safety, if we cannot get a token, assume user does not exist.
         return False
-
     headers = {"Authorization": f"Bearer {token}"}
-    graph_url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
-    response = requests.get(graph_url, headers=headers)
+    # Compute expected UPN: replace "@" with "_at_" and append your domain.
+    mail_nickname = email.replace("@", "_at_")
+    expected_upn = f"{mail_nickname}@oviedojeepclub.onmicrosoft.com"
     
+    # Construct a filter query for userPrincipalName.
+    filter_query = f"userPrincipalName eq '{expected_upn}'"
+    url = f"https://graph.microsoft.com/v1.0/users?$filter={quote(filter_query)}"
+    
+    response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        return True  # User exists
-    elif response.status_code == 404:
-        return False  # User not found (deleted or does not exist)
+        data = response.json()
+        if data.get("value") and len(data["value"]) > 0:
+            return True
     else:
-        # Handle other status codes or log for further analysis
-        print("Unexpected response from Graph API:", response.status_code, response.text)
-        return False
+        print("Error checking user existence:", response.status_code, response.text)
+    return False
 
 def get_facebook_events(page_id, access_token):
     print("##### DEBUG ##### In get_facebook_events()")
