@@ -78,7 +78,8 @@ def favicon():
 def validate_user_session():
     print("##### DEBUG ##### In validate_user_session()")
     if current_user.is_authenticated:
-        if not user_still_exists(current_user.id):
+        # Use the user's email instead of the id for the existence check.
+        if not user_still_exists(current_user.email):
             logout_user()
             session.clear()
             flash("Your account is no longer valid. Please log in again.")
