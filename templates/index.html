@@ -65,6 +65,17 @@
                 <h2>Join Oviedo Jeep Club</h2>
                 <p>Membership: <strong>Oviedo Jeep Club Membership</strong></p>
                 <p>Cost: <strong>$50.00</strong></p>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    <div id="flash-messages">
+                      {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                          {{ message }}
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                {% endwith %}
                 {% if session.receipt_url %}
                   <div class="receipt-info">
                       <p>Thank you for your payment! You can view your receipt here: 
