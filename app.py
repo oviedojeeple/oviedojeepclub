@@ -276,6 +276,7 @@ def pay():
         display_name = request.form.get('displayName')
         password = request.form.get('password')
         
+        # Process Square Payment
         body = {
             "source_id": nonce,
             "amount_money": {
@@ -290,18 +291,20 @@ def pay():
         if result.is_success():
             flash('Payment Successful! Creating your account...', 'success')
             join_date = int(datetime.now().timestamp())
-            expiration_date = compute_expiration_date()
+            expiration_date = compute_expiration_date()  # Ensure this function uses datetime.now() correctly
             try:
-                print("##### DEBUG ##### In pay() about to create user with: ", email, display_name, password, join_date, expiration_datet)
                 created_user = create_b2c_user(email, display_name, password, join_date, expiration_date)
+                print("##### DEBUG ##### User created: ", created_user)
                 flash('Account created successfully. Please sign in.', 'success')
             except Exception as e:
                 flash(f'Error creating account: {e}', 'danger')
+                print("##### DEBUG ##### Error creating account:", e)
             return redirect(url_for('index'))
         else:
             flash('Payment Failed. Please try again.', 'danger')
+            return redirect(url_for('index'))
     
-    # For GET requests, simply redirect to the index page.
+    # For GET requests, simply redirect to index.
     return redirect(url_for('index'))
     
 # Privacy Policy Route
