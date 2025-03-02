@@ -65,37 +65,45 @@
                 <h2>Join Oviedo Jeep Club</h2>
                 <p>Membership: <strong>Oviedo Jeep Club Membership</strong></p>
                 <p>Cost: <strong>$50.00</strong></p>
-                <form id="payment-form" method="post" action="/pay">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="email">Email:</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="displayName">Name:</label>
-                            <input type="text" id="displayName" name="displayName" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="password">Password:</label>
-                            <input type="password" id="password" name="password"
-                                   minlength="8" maxlength="64"
-                                   pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,64}$"
-                                   title="Password must be 8-64 characters and include at least one letter and one number"
-                                   required>
-                        </div>
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm Password:</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword"
-                                   minlength="8" maxlength="64" required>
-                        </div>
-                    </div>
-                    <!-- Square Payment Element -->
-                    <div id="card-container"></div>
-                    <button id="card-button" type="submit">Pay Membership Fee</button>
-                    <input type="hidden" name="nonce" id="card-nonce">
-                </form>
+                {% if session.receipt_url %}
+                  <div class="receipt-info">
+                      <p>Thank you for your payment! You can view your receipt here: 
+                         <a href="{{ session.receipt_url }}" target="_blank">View Receipt</a>
+                      </p>
+                  </div>
+                {% else %}
+                  <form id="payment-form" method="post" action="/pay">
+                      <div class="form-row">
+                          <div class="form-group">
+                              <label for="email">Email:</label>
+                              <input type="email" id="email" name="email" required>
+                          </div>
+                          <div class="form-group">
+                              <label for="displayName">Name:</label>
+                              <input type="text" id="displayName" name="displayName" required>
+                          </div>
+                      </div>
+                      <div class="form-row">
+                          <div class="form-group">
+                              <label for="password">Password:</label>
+                              <input type="password" id="password" name="password"
+                                     minlength="8" maxlength="64"
+                                     pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,64}$"
+                                     title="Password must be 8-64 characters and include at least one letter and one number"
+                                     required>
+                          </div>
+                          <div class="form-group">
+                              <label for="confirmPassword">Confirm Password:</label>
+                              <input type="password" id="confirmPassword" name="confirmPassword"
+                                     minlength="8" maxlength="64" required>
+                          </div>
+                      </div>
+                      <!-- Square Payment Element -->
+                      <div id="card-container"></div>
+                      <button id="card-button" type="submit">Pay Membership Fee</button>
+                      <input type="hidden" name="nonce" id="card-nonce">
+                  </form>
+                {% endif %}
             </section>
           {% endif %}
 
