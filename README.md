@@ -71,11 +71,11 @@ Static files are served from the `static` directory. This includes styling, imag
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/favicon.ico)
 
 - **static/images/ojc.png**  
-  Likely the logo or a key image representing the Oviedo Jeep Club.  
+  The Oviedo Jeep Club logo.  
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/images/ojc.png)
 
 - **static/images/GoInkit.png**  
-  An additional image asset, potentially used for partner branding or promotional content.  
+  Our partner GoInkIt's logo.  
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/images/GoInkit.png)
 
 - **static/scripts/profile.js**  
