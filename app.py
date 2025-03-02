@@ -107,11 +107,9 @@ def auth_callback():
         member_expiration_raw = user_info.get("extension_MemberExpirationDate")
         
         # Convert the integer timestamp to a date string.
-        # If the timestamp is in milliseconds, divide by 1000. Adjust as necessary.
         if member_expiration_raw:
             try:
                 timestamp_int = int(member_expiration_raw)
-                # Check if the timestamp seems to be in milliseconds
                 if timestamp_int > 1e10:
                     timestamp_int = timestamp_int / 1000
                 member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%B, %-d %Y')
@@ -121,12 +119,15 @@ def auth_callback():
         else:
             member_expiration = "Not Available"
         
-        # Create the user_data dictionary including the formatted expiration date
+        # Safely get the job title (or default if not present)
+        job_title = user_info.get("jobTitle", "OJC Member")
+        
+        # Create the user_data dictionary
         user_data = {
             "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0],
-            "user_job_title": user_info.get("jobTitle", "OJC Member"),
+            "job_title": job_title,
             "member_expiration_date": member_expiration
         }
         session["user"] = user_data
