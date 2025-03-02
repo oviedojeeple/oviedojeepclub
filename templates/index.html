@@ -61,7 +61,7 @@
                 <p>Please log in or click Join to participate in the club.</p>
             </section>
             <!-- Hidden Join Section; becomes visible when "Join" is clicked -->
-            <section id="join-section" style="display: none;">
+            <section id="join-section" style="display: {{ 'block' if joinVisible else 'none' }};">
                 <h2>Join Oviedo Jeep Club</h2>
                 <p>Membership: <strong>Oviedo Jeep Club Membership</strong></p>
                 <p>Cost: <strong>$50.00</strong></p>
@@ -117,7 +117,6 @@
                 {% endif %}
             </section>
           {% endif %}
-
   </main>
   
   <footer>
