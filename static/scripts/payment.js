@@ -16,42 +16,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     const renewPayButton = document.getElementById("renewPayButton");
     if (renewPayButton) {
         renewPayButton.addEventListener("click", function () {
-
-            // Disable the button to prevent multiple clicks
-            renewPayButton.disabled = true;
-            renewPayButton.textContent = "Processing...";
-            
-            fetch("/renew-membership", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    renewPayButton.disabled = false; // Re-enable on success.
-                    renewPayButton.textContent = "Pay Now";
-                    location.reload(); // Refresh to show new expiration date and flash message
-                } else {
-                    showFlashMessage("Payment failed. Please try again.", "danger");
-                    renewPayButton.disabled = false; // Re-enable on failure
-                    renewPayButton.textContent = "Pay Now";
-                }
-            })
-            .catch(error => {
-                console.error("Error processing renewal:", error);
-                showFlashMessage("An error occurred. Please try again.", "danger");
-                renewPayButton.disabled = false; // Re-enable on error
-                renewPayButton.textContent = "Pay Now";
-            });
+            handlePayment(renewPayButton, "/renew-membership");
         });
     }
-    
+
     // Initialize Square Payment Form
-    const payments = Square.payments(applicationId, 'sandbox');
+    const payments = Square.payments(applicationId, "sandbox");
     const card = await payments.card();
-    await card.attach('#card-container');
-    
-    // Flash message handling
+    await card.attach("#card-container");
+
+    // Flash message handling function
     function displayClientFlash(message, category) {
         const flashContainer = document.getElementById("flash-messages");
         if (!flashContainer) return;
@@ -67,31 +41,68 @@ document.addEventListener("DOMContentLoaded", async function () {
         }, 5000);
     }
 
-    // Handle Payment Form Submission
-    document.querySelector('#payment-form').addEventListener('submit', async function (event) {
-        event.preventDefault();
-        
-        // Retrieve user input values
-        const email = document.getElementById('email').value;
-        const displayName = document.getElementById('displayName').value;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        
-        // Basic client-side check: ensure password and confirmation match.
-        if (password !== confirmPassword) {
-            displayClientFlash("Passwords do not match. Please re-enter.", "danger");
-            return;
-        }
-        
-        // Optionally, you could also validate the password using JavaScript regex,
-        // but the HTML pattern attribute should enforce it in supporting browsers.
-        const result = await card.tokenize();
-        if (result.status === 'OK') {
-            document.querySelector('#card-nonce').value = result.token;
-            this.submit(); // Submit the form to /pay
-        } else {
-            console.error(result.errors);
-            displayClientFlash("Error processing payment details. Please try again.", "danger");
-        }
-    });
+    // Handle Payment Form Submission for Joining
+    const joinPayButton = document.querySelector("#card-button");
+    if (joinPayButton) {
+        joinPayButton.addEventListener("click", async function (event) {
+            event.preventDefault();
+
+            // Disable button and change text
+            joinPayButton.disabled = true;
+            joinPayButton.textContent = "Processing...";
+
+            // Retrieve user input values
+            const email = document.getElementById("email").value;
+            const displayName = document.getElementById("displayName").value;
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            // Validate password match
+            if (password !== confirmPassword) {
+                displayClientFlash("Passwords do not match. Please re-enter.", "danger");
+                joinPayButton.disabled = false;
+                joinPayButton.textContent = "Pay Membership Fee";
+                return;
+            }
+
+            // Process Square Payment
+            const result = await card.tokenize();
+            if (result.status === "OK") {
+                document.querySelector("#card-nonce").value = result.token;
+                document.querySelector("#payment-form").submit();
+            } else {
+                console.error(result.errors);
+                displayClientFlash("Error processing payment details. Please try again.", "danger");
+                joinPayButton.disabled = false;
+                joinPayButton.textContent = "Pay Membership Fee";
+            }
+        });
+    }
+
+    // Generic function to handle payments and disable buttons
+    function handlePayment(button, url) {
+        button.disabled = true;
+        button.textContent = "Processing...";
+
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    location.reload(); // Refresh to show updates
+                } else {
+                    displayClientFlash("Payment failed. Please try again.", "danger");
+                    button.disabled = false;
+                    button.textContent = button.id === "renewPayButton" ? "Pay Now" : "Pay Membership Fee";
+                }
+            })
+            .catch((error) => {
+                console.error("Error processing payment:", error);
+                displayClientFlash("An error occurred. Please try again.", "danger");
+                button.disabled = false;
+                button.textContent = button.id === "renewPayButton" ? "Pay Now" : "Pay Membership Fee";
+            });
+    }
 });
