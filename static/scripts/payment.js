@@ -25,13 +25,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = await payments.card();
     await card.attach("#card-container");
 
-    // Flash message handling function
-    function displayClientFlash(message, category) {
+    // Function to display a flash message
+    function showFlashMessage(message, category) {
         const flashContainer = document.getElementById("flash-messages");
         if (!flashContainer) return;
 
+        // Clear existing messages
+        flashContainer.innerHTML = '';
+
+        // Create the new flash message
         const flashMessage = document.createElement("div");
-        flashMessage.className = `alert ${category}`;
+        flashMessage.className = `flash-message flash-${category}`;
         flashMessage.textContent = message;
         flashContainer.appendChild(flashMessage);
 
@@ -59,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             // Validate password match
             if (password !== confirmPassword) {
-                displayClientFlash("Passwords do not match. Please re-enter.", "danger");
+                showFlashMessage("Passwords do not match. Please re-enter.", "danger");
                 joinPayButton.disabled = false;
                 joinPayButton.textContent = "Pay Membership Fee";
                 return;
@@ -72,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 document.querySelector("#payment-form").submit();
             } else {
                 console.error(result.errors);
-                displayClientFlash("Error processing payment details. Please try again.", "danger");
+                showFlashMessage("Error processing payment details. Please try again.", "danger");
                 joinPayButton.disabled = false;
                 joinPayButton.textContent = "Pay Membership Fee";
             }
@@ -93,14 +97,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (data.success) {
                     location.reload(); // Refresh to show updates
                 } else {
-                    displayClientFlash("Payment failed. Please try again.", "danger");
+                    showFlashMessage("Payment failed. Please try again.", "danger");
                     button.disabled = false;
                     button.textContent = button.id === "renewPayButton" ? "Pay Now" : "Pay Membership Fee";
                 }
             })
             .catch((error) => {
                 console.error("Error processing payment:", error);
-                displayClientFlash("An error occurred. Please try again.", "danger");
+                showFlashMessage("An error occurred. Please try again.", "danger");
                 button.disabled = false;
                 button.textContent = button.id === "renewPayButton" ? "Pay Now" : "Pay Membership Fee";
             });
