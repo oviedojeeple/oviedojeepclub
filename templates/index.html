@@ -11,17 +11,6 @@
 <body>
   <header>
       <img src="/static/images/ojc.png" alt="Oviedo Jeep Club Logo" class="logo">
-      <!-- (Optional) Debug Output -->
-      {# Use the full user_data from the session for renewal logic #}
-      {% if user_data and user_data.member_expiration_iso %}
-      {% set expiration_date = user_data.member_expiration_iso | to_date %}
-      {% set today = now().date() %}
-    
-      <p>Today's Date: {{ today }}</p>
-      <p>Membership Expiration Raw: {{ user_data.member_expiration_date }}</p>
-      <p>Parsed Expiration Date: {{ expiration_date }}</p>
-      
-      {% endif %}
   </header>
 
   <nav class="menu">
@@ -74,6 +63,14 @@
                     <td>{{ user.member_expiration_date }}</td>
                   </tr>
               </table>
+                  <!-- (Optional) Debug Output -->
+                  {% if user_data and user_data.member_expiration_iso %}
+                    {% set expiration_date = user_data.member_expiration_iso | to_date %}
+                    {% set today = now().date() %}
+                    <p>Today's Date: {{ today }}</p>
+                    <p>Membership Expiration Raw: {{ user_data.member_expiration_date }}</p>
+                    <p>Parsed Expiration Date: {{ expiration_date }}</p>
+                  {% endif %}
           </section>
           <section id="events-section" class="content-section">
               <h2>Oviedo Jeep Club Public Events</h2>
