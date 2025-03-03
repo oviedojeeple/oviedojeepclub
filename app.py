@@ -106,7 +106,7 @@ def auth_callback():
 
         # Retrieve the raw custom attribute value
         member_expiration_raw = user_info.get("extension_MemberExpirationDate")
-        
+    
         # Convert the integer timestamp to a date string.
         if member_expiration_raw:
             try:
@@ -114,6 +114,7 @@ def auth_callback():
                 if timestamp_int > 1e10:
                     timestamp_int = timestamp_int / 1000
                 member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%B, %-d %Y')
+                parsed_expiration_date = datetime.strptime(user['member_expiration'], "%B, %d %Y").date()
             except Exception as e:
                 print("Error converting timestamp:", e)
                 member_expiration = "Invalid Date"
@@ -129,7 +130,8 @@ def auth_callback():
             "name": user_info["name"],
             "email": user_info["emails"][0],
             "job_title": job_title,
-            "member_expiration_date": member_expiration
+            "member_expiration_date": member_expiration,
+            "parsed_expiration_date": parsed_expiration_date
         }
         session["user"] = user_data
         
