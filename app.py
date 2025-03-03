@@ -68,6 +68,11 @@ def load_user(user_id):
     user_data.pop("member_expiration_iso", None)
     return User(**user_data)
 
+@app.context_processor
+def inject_now():
+    # Returns a callable function so that in the template you can do now().date()
+    return {'now': lambda: datetime.utcnow()}
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
