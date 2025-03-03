@@ -38,6 +38,8 @@
             {% endif %}
         {% endwith %}
     </div>
+    <p>Today's Date: {{ today }}</p>
+    <p>Membership Expiration Date (Parsed): {{ expiration_date }}</p>
       {% if user.is_authenticated %}
           <!-- Show profile and events sections if authenticated -->
           <section id="profile-section">
