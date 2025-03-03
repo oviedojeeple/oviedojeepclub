@@ -65,12 +65,12 @@
                   <p>Loading events from Facebook...</p>
               </div>
           </section>
-          {% if user and user.membership_expiration_date %}
-              {% set expiration_date = user.membership_expiration_date | strptime("%B, %-d %Y") %}
+          {% if user and user.member_expiration_date %}
+              {% set expiration_date = user.member_expiration_date | strptime("%B, %-d %Y") %}
               {% set today = now().date() %}
                   <!-- Debugging Output -->
                   <p>Today's Date: {{ today }}</p>
-                  <p>Membership Expiration Raw: {{ user.membership_expiration_date }}</p>
+                  <p>Membership Expiration Raw: {{ user.member_expiration_date }}</p>
                   <p>Parsed Expiration Date: {{ expiration_date }}</p>
               <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
               {% if today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
