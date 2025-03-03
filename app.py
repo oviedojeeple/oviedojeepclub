@@ -138,14 +138,13 @@ def auth_callback():
             "name": user_info["name"],
             "email": user_info["emails"][0],
             "job_title": job_title,
-            "member_expiration_date": member_expiration,
-            "parsed_expiration_date": parsed_expiration_date
+            "member_expiration_date": member_expiration
         }
 
-        # Store user data in session
-        session["user"] = user_data
+        # Store parsed_expiration_date separately (not in user_data)
+        session["user"] = {**user_data, "parsed_expiration_date": parsed_expiration_date}
 
-        # Pass a new User instance to login_user if needed by Flask-Login
+        # Pass only the required fields to login_user
         login_user(User(**user_data), remember=True)
 
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
