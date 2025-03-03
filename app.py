@@ -116,18 +116,20 @@ def auth_callback():
         if member_expiration_raw:
             try:
                 timestamp_int = int(member_expiration_raw)
-                if timestamp_int > 1e10:  # Convert from milliseconds if necessary
+                if timestamp_int > 1e10:  # If timestamp is in milliseconds
                     timestamp_int = timestamp_int / 1000
-                
-                # Convert to formatted date string (e.g., "March 31, 2025")
-                member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%B %d, %Y')
-
-                # Convert to actual date object for easier comparisons
-                parsed_expiration_date = datetime.strptime(member_expiration, "%B %d, %Y").date()
+                # Get the date object
+                expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
+                # Store two formats: one for display and one for logic
+                member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
+                member_expiration_iso = expiration_date_obj.isoformat()         # e.g., "2025-03-31"
             except Exception as e:
                 print("##### ERROR ##### Converting timestamp failed:", e)
                 member_expiration = "Invalid Date"
-                parsed_expiration_date = None
+                member_expiration_iso = None
+        else:
+            member_expiration = "Not Available"
+            member_expiration_iso = None
 
         # Safely get the job title (or default if not present)
         job_title = user_info.get("jobTitle", "OJC Member")
@@ -137,15 +139,16 @@ def auth_callback():
             "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0],
-            "job_title": job_title,
-            "member_expiration_date": member_expiration
+            "job_title": user_info.get("jobTitle", "OJC Member"),
+            "member_expiration_date": member_expiration,
+            "member_expiration_iso": member_expiration_iso  # New key for logic
         }
 
         # Store parsed_expiration_date separately (not in user_data)
-        session["user"] = {**user_data, "parsed_expiration_date": parsed_expiration_date}
-
+        session["user"] = user_data
+        
         # Pass only the required fields to login_user
-        login_user(User(**user_data), remember=True)
+        login_user(User(**{k: v for k, v in user_data.items() if k != "member_expiration_iso"}), remember=True)
 
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
         return redirect(url_for("index"))
@@ -435,7 +438,16 @@ def sync_public_events():
     query_string = "&".join(f"{key}={quote(str(value))}" for key, value in params.items())
     fb_auth_url = f"https://www.facebook.com/v22.0/dialog/oauth?{query_string}"
     return redirect(fb_auth_url)
-    
+
+@app.template_filter('to_date')
+def to_date_filter(value, format="%Y-%m-%d"):
+    print("##### DEBUG ##### In to_date_filter()")
+    try:
+        return datetime.strptime(value, format).date()
+    except Exception as e:
+        print("Error in to_date filter:", e)
+        return None
+
 def _build_auth_code_flow():
     print("##### DEBUG ##### In _build_auth_code_flow()")
     app = msal.ConfidentialClientApplication(
