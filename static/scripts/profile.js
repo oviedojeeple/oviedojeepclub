@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const eventsSection = document.getElementById('events-section');
     const eventsContent = document.getElementById('events-section-content');
     const collectBtn = document.getElementById('collect-events-btn');
+    const renewSection = document.getElementById('renew-section');
 
     // Utility: Get URL parameters (if needed)
     function getQueryParam(param) {
