@@ -74,10 +74,9 @@
                   <p>Loading events from Facebook...</p>
               </div>
           </section>
-          {% set user_data = session.get("user", {}) %}
-          {% if user_data.member_expiration_iso %}
-            {% set expiration_date = user_data.member_expiration_iso | to_date %}
-            {% set today = now().date() %}
+          {% if user_data and user_data.member_expiration_iso %}
+              {% set expiration_date = user_data.member_expiration_iso | to_date %}
+              {% set today = now().date() %}
           
             <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
             {% if expiration_date and today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
