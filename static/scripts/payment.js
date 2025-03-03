@@ -4,6 +4,37 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.log("Application ID:", applicationId);
     const locationId = "LBA931MEK4R5V"; // Replace with your actual location ID
 
+    // Show the renew membership section when the renew button is clicked
+    const renewButton = document.getElementById("renewButton");
+    if (renewButton) {
+        renewButton.addEventListener("click", function () {
+            document.getElementById("renew-section").style.display = "block";
+        });
+    }
+
+    // Handle payment for membership renewal
+    const renewPayButton = document.getElementById("renewPayButton");
+    if (renewPayButton) {
+        renewPayButton.addEventListener("click", function () {
+            fetch("/renew-membership", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh to show new expiration date and flash message
+                } else {
+                    showFlashMessage("Payment failed. Please try again.", "danger");
+                }
+            })
+            .catch(error => {
+                console.error("Error processing renewal:", error);
+                showFlashMessage("An error occurred. Please try again.", "danger");
+            });
+        });
+    }
+    
     // Initialize Square Payment Form
     const payments = Square.payments(applicationId, 'sandbox');
     const card = await payments.card();
