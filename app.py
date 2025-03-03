@@ -79,6 +79,10 @@ def inject_now():
     # Returns a callable function so that in the template you can do now().date()
     return {'now': lambda: datetime.utcnow()}
 
+@app.context_processor
+def inject_user_data():
+    return {"user_data": session.get("user", {})}
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
