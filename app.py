@@ -62,12 +62,18 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    print(f'##### DEBUG ##### In load_user with {user_id}')
-    print("##### DEBUG ##### In load_user with Full session:", dict(session))
-    user_data = session.get("user", {}).copy()  # Make a copy so as not to modify session directly
-    user_data.pop("member_expiration_iso", None)
-    return User(**user_data)
-
+    user_data = session.get("user_data", {})
+    if user_data:
+        # Build a User object using the full user_data
+        return User(
+            user_id=user_data["user_id"],
+            name=user_data["name"],
+            email=user_data["email"],
+            job_title=user_data.get("job_title"),
+            member_expiration_date=user_data.get("member_expiration_date")
+        )
+    return None
+    
 @app.context_processor
 def inject_now():
     # Returns a callable function so that in the template you can do now().date()
@@ -141,7 +147,7 @@ def auth_callback():
         }
     
         # Store the full user_data in session (for template use)
-        session["user"] = user_data
+        session["user_data"] = user_data
     
         # Remove extra keys that User() doesn't expect.
         # (Assuming your User class expects only user_id, name, email, job_title, and member_expiration_date)
