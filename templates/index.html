@@ -20,6 +20,15 @@
       <button id="menu-merchandise" class="nav-btn">
         <img src="/static/images/GoInkit.png" alt="Merchandise" class="external-logo">
       </button>
+          {% set user_data = session.get("user", {}) %}
+          {% if user_data.member_expiration_iso %}
+            {% set expiration_date = user_data.member_expiration_iso | to_date %}
+            {% set today = now().date() %}         
+            <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
+            {% if expiration_date and today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
+                <button id="renewButton" class="nav-btn">Renew</button>
+            {% endif %}
+          {% endif %}
       <button id="menu-logout" class="nav-btn">Logout</button>
     {% else %}
       <button id="menu-login" class="nav-btn">Login</button>
@@ -77,7 +86,6 @@
           
             <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
             {% if expiration_date and today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
-                <button id="renewButton" class="btn btn-primary">Renew</button>
                 <section id="renew-section" class="content-section" style="display: none;">
                     <h2>Renew Your Membership</h2>
                     <p>Your membership renewal costs $30. Click below to continue.</p>
