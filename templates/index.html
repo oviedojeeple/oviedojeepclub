@@ -60,9 +60,7 @@
             {% set today = now().date() %}
             {% if today.year == expiration_date.year and today.month in [1, 2, 3] %}
                 <button id="renewButton" class="btn btn-primary">Renew Membership</button>
-            {% endif %}
-          {% endif %}
-          <section id="renew-section" class="content-section">
+                <section id="renew-section" class="content-section">
               <h2>Renew Your Membership</h2>
               <p>Your membership renewal costs $30. Click below to continue.</p>
               {% with messages = get_flashed_messages(with_categories=true) %}
@@ -77,7 +75,9 @@
                   {% endif %}
               {% endwith %}
               <button id="renewPayButton" class="btn btn-success">Pay Now</button>
-          </section>
+            </section>
+            {% endif %}
+          {% endif %}
       {% else %}
           <!-- For unauthenticated users -->
             <section id="default-prompt">
