@@ -66,11 +66,12 @@
               </div>
           </section>
           {% if user and user.membership_expiration %}
-              {% set expiration_date = user.membership_expiration | int | fromtimestamp %}
+              {% set expiration_date = user.membership_expiration | strptime("%B, %-d %Y") %}
               {% set today = now().date() %}
+              <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
               {% if today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
                   <button id="renewButton" class="btn btn-primary">Renew</button>
-                  <section id="renew-section" class="content-section">
+                  <section id="renew-section" class="content-section" style="display: none;">
                       <h2>Renew Your Membership</h2>
                       <p>Your membership renewal costs $30. Click below to continue.</p>
                       <button id="renewPayButton" class="btn btn-success">Pay Now</button>
