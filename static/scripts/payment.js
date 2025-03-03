@@ -16,6 +16,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     const renewPayButton = document.getElementById("renewPayButton");
     if (renewPayButton) {
         renewPayButton.addEventListener("click", function () {
+
+            // Disable the button to prevent multiple clicks
+            renewPayButton.disabled = true;
+            renewPayButton.textContent = "Processing...";
+            
             fetch("/renew-membership", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" }
@@ -23,14 +28,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    renewPayButton.disabled = false; // Re-enable on success.
+                    renewPayButton.textContent = "Pay Now";
                     location.reload(); // Refresh to show new expiration date and flash message
                 } else {
                     showFlashMessage("Payment failed. Please try again.", "danger");
+                    renewPayButton.disabled = false; // Re-enable on failure
+                    renewPayButton.textContent = "Pay Now";
                 }
             })
             .catch(error => {
                 console.error("Error processing renewal:", error);
                 showFlashMessage("An error occurred. Please try again.", "danger");
+                renewPayButton.disabled = false; // Re-enable on error
+                renewPayButton.textContent = "Pay Now";
             });
         });
     }
