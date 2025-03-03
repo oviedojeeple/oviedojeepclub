@@ -94,12 +94,11 @@ def index():
 @app.route('/auth/callback')
 def auth_callback():
     print("##### DEBUG ##### In auth_callback()")
-
     flow = session.get("flow")
     if not flow:
         print("##### DEBUG ##### In auth_callback() Session expired or lost, please try logging in again.")
         return redirect(url_for("login"))
-
+    
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
         user_info = result
@@ -107,52 +106,49 @@ def auth_callback():
 
         # Retrieve the raw custom attribute value
         member_expiration_raw = user_info.get("extension_MemberExpirationDate")
-
+    
         # Default values in case of conversion issues
         member_expiration = "Not Available"
-        parsed_expiration_date = None  
-
-        # Convert the integer timestamp to a date string and parse it
+        member_expiration_iso = None
+    
+        # Convert the integer timestamp to a date string and ISO format
         if member_expiration_raw:
             try:
                 timestamp_int = int(member_expiration_raw)
-                if timestamp_int > 1e10:  # If timestamp is in milliseconds
+                if timestamp_int > 1e10:  # Convert from milliseconds if necessary
                     timestamp_int = timestamp_int / 1000
-                # Get the date object
                 expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
-                # Store two formats: one for display and one for logic
                 member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
                 member_expiration_iso = expiration_date_obj.isoformat()         # e.g., "2025-03-31"
             except Exception as e:
                 print("##### ERROR ##### Converting timestamp failed:", e)
                 member_expiration = "Invalid Date"
-                member_expiration_iso = None
-        else:
-            member_expiration = "Not Available"
-            member_expiration_iso = None
-
-        # Safely get the job title (or default if not present)
+    
+        # Safely get the job title (or default)
         job_title = user_info.get("jobTitle", "OJC Member")
-
-        # Create the user_data dictionary
+    
+        # Create the user_data dictionary with all info
         user_data = {
             "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0],
-            "job_title": user_info.get("jobTitle", "OJC Member"),
+            "job_title": job_title,
             "member_expiration_date": member_expiration,
-            "member_expiration_iso": member_expiration_iso  # New key for logic
+            "member_expiration_iso": member_expiration_iso
         }
-
-        # Store parsed_expiration_date separately (not in user_data)
+    
+        # Store the full user_data in session (for template use)
         session["user"] = user_data
-        
-        # Pass only the required fields to login_user
-        login_user(User(**{k: v for k, v in user_data.items() if k != "member_expiration_iso"}), remember=True)
-
+    
+        # Remove extra keys that User() doesn't expect.
+        # (Assuming your User class expects only user_id, name, email, job_title, and member_expiration_date)
+        user_data_for_login = {k: v for k, v in user_data.items() 
+                               if k in ["user_id", "name", "email", "job_title", "member_expiration_date"]}
+    
+        login_user(User(**user_data_for_login), remember=True)
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
         return redirect(url_for("index"))
-
+    
     return "Login failed", 401
 
 @app.route('/blob-events')
