@@ -64,12 +64,9 @@ class User(UserMixin):
 def load_user(user_id):
     print(f'##### DEBUG ##### In load_user with {user_id}')
     print("##### DEBUG ##### In load_user with Full session:", dict(session))
-     user_data = session.get("user", {}).copy()  # Make a copy so as not to modify session directly
-    if user_data and user_data.get("user_id") == user_id:
-        print(f'##### DEBUG ##### Session user data: {user_data}')
-        user_data.pop("member_expiration_iso", None)
-        return User(**user_data)
-    return None
+    user_data = session.get("user", {}).copy()  # Make a copy so as not to modify session directly
+    user_data.pop("member_expiration_iso", None)
+    return User(**user_data)
 
 @app.route('/favicon.ico')
 def favicon():
