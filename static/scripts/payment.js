@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!flashContainer) return;
 
         const flashMessage = document.createElement("div");
-        flashMessage.className = `alert alert-${category}`;
+        flashMessage.className = `alert ${category}`;
         flashMessage.textContent = message;
         flashContainer.appendChild(flashMessage);
 
