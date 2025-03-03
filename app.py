@@ -342,6 +342,68 @@ def square_webhook():
             print("Payment Completed")
     return '', 200
 
+@app.route('/renew-membership', methods=['POST'])
+def renew_membership():
+    print("##### DEBUG ##### In renew_membership()")
+    """
+    Process membership renewal, charge via Square, and update Azure AD B2C.
+    """
+    user = session.get('user')
+    if not user:
+        flash("Error: User not authenticated", "danger")
+        return redirect(url_for("index"))
+
+    square_payment_url = "https://connect.squareup.com/v2/checkout"
+
+    payment_payload = {
+        "idempotency_key": str(os.urandom(16).hex()),  # Unique transaction ID
+        "order": {
+            "location_id": "YOUR_SQUARE_LOCATION_ID",
+            "line_items": [
+                {
+                    "name": "Oviedo Jeep Club Membership Renewal",
+                    "quantity": "1",
+                    "base_price_money": {
+                        "amount": 3000,  # $30.00 in cents
+                        "currency": "USD"
+                    }
+                }
+            ]
+        }
+    }
+
+    headers = {
+        "Authorization": f"Bearer {os.getenv('SQUARE_ACCESS_TOKEN')}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(square_payment_url, json=payment_payload, headers=headers)
+
+    if response.status_code == 200:
+        payment_data = response.json()
+        checkout_url = payment_data['checkout']['checkout_page_url']
+
+        # Extend membership expiration to next year's March 31st
+        new_expiration = datetime.date.today().year + 1
+        new_expiration_date = f"{new_expiration}-03-31"
+
+        azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{user['id']}"
+        update_payload = {"membership_expiration": new_expiration_date}
+
+        update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=headers)
+
+        if update_response.status_code == 204:
+            session['user']['membership_expiration'] = new_expiration_date  # Update session
+            flash("Membership successfully renewed! New expiration: " + new_expiration_date, "success")
+        else:
+            flash("Payment successful, but failed to update membership expiration.", "warning")
+        
+        return jsonify({"success": True})
+
+    else:
+        flash("Payment failed. Please try again.", "danger")
+        return jsonify({"success": False})
+
 @app.route('/sync-public-events')
 def sync_public_events():
     print("##### DEBUG ##### In sync_public_events()")
@@ -516,6 +578,17 @@ def user_still_exists(email):
             return True
     else:
         print("Error checking user existence:", response.status_code, response.text)
+    return False
+
+# Function to check if the user can renew
+def is_renewal_eligible(user):
+    print("##### DEBUG ##### In is_renewal_eligible()")
+    today = datetime.date.today()
+    if "membership_expiration" in user:
+        expiration_date = datetime.datetime.strptime(user["membership_expiration"], "%Y-%m-%d").date()
+        renewal_start = datetime.date(expiration_date.year, 1, 1)
+        renewal_end = datetime.date(expiration_date.year, 3, 31)
+        return renewal_start <= today <= renewal_end
     return False
 
 def get_facebook_events(page_id, access_token):

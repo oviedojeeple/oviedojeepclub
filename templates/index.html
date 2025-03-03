@@ -55,6 +55,29 @@
                   <p>Loading events from Facebook...</p>
               </div>
           </section>
+          {% if user and user.membership_expiration %}
+            {% set expiration_date = user.membership_expiration | strptime("%Y-%m-%d") %}
+            {% set today = now().date() %}
+            {% if today.year == expiration_date.year and today.month in [1, 2, 3] %}
+                <button id="renewButton" class="btn btn-primary">Renew Membership</button>
+            {% endif %}
+          {% endif %}
+          <section id="renew-section" class="content-section">
+              <h2>Renew Your Membership</h2>
+              <p>Your membership renewal costs $30. Click below to continue.</p>
+              {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    <div id="server-flash-messages">
+                      {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                          {{ message }}
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+              {% endwith %}
+              <button id="renewPayButton" class="btn btn-success">Pay Now</button>
+          </section>
       {% else %}
           <!-- For unauthenticated users -->
             <section id="default-prompt">

@@ -4,15 +4,56 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.log("Application ID:", applicationId);
     const locationId = "LBA931MEK4R5V"; // Replace with your actual location ID
 
+    // Show the renew membership section when the renew button is clicked
+    const renewButton = document.getElementById("renewButton");
+    if (renewButton) {
+        renewButton.addEventListener("click", function () {
+            document.getElementById("renew-section").style.display = "block";
+        });
+    }
+
+    // Handle payment for membership renewal
+    const renewPayButton = document.getElementById("renewPayButton");
+    if (renewPayButton) {
+        renewPayButton.addEventListener("click", function () {
+            fetch("/renew-membership", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh to show new expiration date and flash message
+                } else {
+                    showFlashMessage("Payment failed. Please try again.", "danger");
+                }
+            })
+            .catch(error => {
+                console.error("Error processing renewal:", error);
+                showFlashMessage("An error occurred. Please try again.", "danger");
+            });
+        });
+    }
+    
     // Initialize Square Payment Form
     const payments = Square.payments(applicationId, 'sandbox');
     const card = await payments.card();
     await card.attach('#card-container');
+    
+    // Flash message handling
+    function displayClientFlash(message, category) {
+        const flashContainer = document.getElementById("flash-messages");
+        if (!flashContainer) return;
 
-    // Helper function to display flash messages
-    function displayClientFlash(message, category = 'danger') {
-        const container = document.getElementById('flash-messages');
-        container.innerHTML = `<div class="flash-message flash-${category}">${message}</div>`;
+        const flashMessage = document.createElement("div");
+        flashMessage.className = `alert alert-${category}`;
+        flashMessage.textContent = message;
+        flashContainer.appendChild(flashMessage);
+
+        // Automatically hide the message after 5 seconds
+        setTimeout(() => {
+            flashMessage.remove();
+        }, 5000);
     }
 
     // Handle Payment Form Submission
