@@ -11,6 +11,17 @@
 <body>
   <header>
       <img src="/static/images/ojc.png" alt="Oviedo Jeep Club Logo" class="logo">
+      <!-- (Optional) Debug Output -->
+      {# Use the full user_data from the session for renewal logic #}
+      {% if user_data and user_data.member_expiration_iso %}
+      {% set expiration_date = user_data.member_expiration_iso | to_date %}
+      {% set today = now().date() %}
+    
+      <p>Today's Date: {{ today }}</p>
+      <p>Membership Expiration Raw: {{ user_data.member_expiration_date }}</p>
+      <p>Parsed Expiration Date: {{ expiration_date }}</p>
+      
+      {% endif %}
   </header>
 
   <nav class="menu">
@@ -20,10 +31,9 @@
       <button id="menu-merchandise" class="nav-btn">
         <img src="/static/images/GoInkit.png" alt="Merchandise" class="external-logo">
       </button>
-          {% set user_data = session.get("user", {}) %}
-          {% if user_data.member_expiration_iso %}
+          {% if user_data and user_data.member_expiration_iso %}
             {% set expiration_date = user_data.member_expiration_iso | to_date %}
-            {% set today = now().date() %}         
+            {% set today = now().date() %}   
             <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
             {% if expiration_date and today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
                 <button id="renewButton" class="nav-btn">Renew</button>
