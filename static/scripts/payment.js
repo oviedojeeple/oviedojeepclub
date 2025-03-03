@@ -39,11 +39,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     const payments = Square.payments(applicationId, 'sandbox');
     const card = await payments.card();
     await card.attach('#card-container');
+    
+    // Flash message handling
+    function displayClientFlash(message, category) {
+        const flashContainer = document.getElementById("flash-messages");
+        if (!flashContainer) return;
 
-    // Helper function to display flash messages
-    function displayClientFlash(message, category = 'danger') {
-        const container = document.getElementById('flash-messages');
-        container.innerHTML = `<div class="flash-message flash-${category}">${message}</div>`;
+        const flashMessage = document.createElement("div");
+        flashMessage.className = `alert alert-${category}`;
+        flashMessage.textContent = message;
+        flashContainer.appendChild(flashMessage);
+
+        // Automatically hide the message after 5 seconds
+        setTimeout(() => {
+            flashMessage.remove();
+        }, 5000);
     }
 
     // Handle Payment Form Submission
