@@ -94,11 +94,12 @@ def index():
 @app.route('/auth/callback')
 def auth_callback():
     print("##### DEBUG ##### In auth_callback()")
+
     flow = session.get("flow")
     if not flow:
         print("##### DEBUG ##### In auth_callback() Session expired or lost, please try logging in again.")
         return redirect(url_for("login"))
-    
+
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if result:
         user_info = result
@@ -106,24 +107,31 @@ def auth_callback():
 
         # Retrieve the raw custom attribute value
         member_expiration_raw = user_info.get("extension_MemberExpirationDate")
-    
-        # Convert the integer timestamp to a date string.
+
+        # Default values in case of conversion issues
+        member_expiration = "Not Available"
+        parsed_expiration_date = None  
+
+        # Convert the integer timestamp to a date string and parse it
         if member_expiration_raw:
             try:
                 timestamp_int = int(member_expiration_raw)
-                if timestamp_int > 1e10:
+                if timestamp_int > 1e10:  # Convert from milliseconds if necessary
                     timestamp_int = timestamp_int / 1000
-                member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%B, %-d %Y')
-                parsed_expiration_date = datetime.strptime(user['member_expiration'], "%B, %d %Y").date()
+                
+                # Convert to formatted date string (e.g., "March 31, 2025")
+                member_expiration = datetime.fromtimestamp(timestamp_int).strftime('%B %d, %Y')
+
+                # Convert to actual date object for easier comparisons
+                parsed_expiration_date = datetime.strptime(member_expiration, "%B %d, %Y").date()
             except Exception as e:
-                print("Error converting timestamp:", e)
+                print("##### ERROR ##### Converting timestamp failed:", e)
                 member_expiration = "Invalid Date"
-        else:
-            member_expiration = "Not Available"
-        
+                parsed_expiration_date = None
+
         # Safely get the job title (or default if not present)
         job_title = user_info.get("jobTitle", "OJC Member")
-        
+
         # Create the user_data dictionary
         user_data = {
             "user_id": user_info["oid"],
@@ -133,13 +141,16 @@ def auth_callback():
             "member_expiration_date": member_expiration,
             "parsed_expiration_date": parsed_expiration_date
         }
+
+        # Store user data in session
         session["user"] = user_data
-        
+
         # Pass a new User instance to login_user if needed by Flask-Login
         login_user(User(**user_data), remember=True)
+
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
         return redirect(url_for("index"))
-    
+
     return "Login failed", 401
 
 @app.route('/blob-events')
