@@ -370,25 +370,19 @@ def square_webhook():
 @app.route('/renew-membership', methods=['POST'])
 def renew_membership():
     print("##### DEBUG ##### In renew_membership()")
-    """
-    Process membership renewal, charge via Square, and update Azure AD B2C.
-    """
+    data = request.get_json()
+    nonce = data.get("nonce")
+    if not nonce:
+        # Return a JSON error if no nonce is provided
+        return jsonify(success=False, message="Missing card information"), 400
+
     user = session.get('user')
     if not user:
-        flash("Error: User not authenticated", "danger")
-        return redirect(url_for("index"))
+        # Instead of a redirect, return a JSON error
+        return jsonify(success=False, message="User not authenticated"), 401
 
-    square_payment_url = "https://connect.squareup.com/v2/checkout"
-
-    # Get the JSON payload
-    data = request.get_json()
-    nonce = data.get("nonce")  # This is the token from Square's tokenize()
-
-    if not nonce:
-        flash("Payment data is missing.", "danger")
-        return jsonify(success=False), 400
-
-    # Now use this nonce in your payment payload:
+    # Use Square Payments API to process the payment with the nonce
+    square_payment_url = "https://connect.squareup.com/v2/payments"
     payment_payload = {
         "source_id": nonce,
         "idempotency_key": str(os.urandom(16).hex()),
@@ -397,38 +391,24 @@ def renew_membership():
             "currency": "USD"
         }
     }
-    # Update your URL if needed, for example:
-    square_payment_url = "https://connect.squareup.com/v2/payments"
-
     headers = {
         "Authorization": f"Bearer {os.getenv('SQUARE_ACCESS_TOKEN')}",
         "Content-Type": "application/json"
     }
-
     response = requests.post(square_payment_url, json=payment_payload, headers=headers)
-
     if response.status_code == 200:
-        payment_data = response.json()
-        checkout_url = payment_data['checkout']['checkout_page_url']
-
-        # Use the compute_expiration_date() function to get the new expiration as a proper timestamp
-        new_expiration_date = compute_expiration_date()
-
+        # Payment processed successfully, update membership
+        new_expiration_date = compute_expiration_date()  # Ensure this returns a timestamp string
         azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{user['id']}"
         update_payload = {"membership_expiration": new_expiration_date}
-
         update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=headers)
-
         if update_response.status_code == 204:
             session['user']['membership_expiration'] = new_expiration_date  # Update session
-            flash("Membership successfully renewed! New expiration: " + new_expiration_date, "success")
             return jsonify(success=True, message="Membership renewed successfully")
         else:
-            flash("Payment successful, but failed to update membership expiration.", "warning")
-            return jsonify({"success": False})
+            return jsonify(success=False, message="Payment succeeded but failed to update membership"), 500
     else:
-        flash("Payment failed. Please try again.", "danger")
-        return jsonify({"success": False})
+        return jsonify(success=False, message="Payment failed"), 400
 
 @app.route('/sync-public-events')
 def sync_public_events():
