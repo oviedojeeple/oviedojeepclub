@@ -74,8 +74,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const menuProfile = document.getElementById('menu-profile');
         const menuEvents = document.getElementById('menu-events');
         const menuMerch = document.getElementById('menu-merchandise');
-        const menuLogout = document.getElementById('menu-logout');
         const menuRenew = document.getElementById('renewButton');
+        const menuLogout = document.getElementById('menu-logout');
         
         menuProfile.addEventListener('click', () => { 
             showSection('profile'); 
@@ -93,8 +93,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         if (menuRenew) {
-            menuEvents.style.display = "inline-block";
-            menuEvents.addEventListener('click', () => { 
+            menuRenew.style.display = "inline-block";
+            menuRenew.addEventListener('click', () => { 
                 showSection('renew');
             });
         }
