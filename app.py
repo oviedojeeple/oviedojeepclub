@@ -371,7 +371,9 @@ def square_webhook():
 def renew_membership():
     print("##### DEBUG ##### In renew_membership()")
     data = request.get_json()
+    print("##### DEBUG ##### In renew_membership() Received JSON:", data)
     nonce = data.get("nonce")
+    print("##### DEBUG ##### In renew_membership() Received nonce:", nonce)
     if not nonce:
         # Return a JSON error if no nonce is provided
         flash('Missing card information.', 'danger')
