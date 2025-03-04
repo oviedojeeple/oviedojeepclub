@@ -400,6 +400,7 @@ def renew_membership():
         "Content-Type": "application/json"
     }
     response = requests.post(square_payment_url, json=payment_payload, headers=headers)
+    print("##### DEBUG ##### In renew_membership() Square payment response:", response.status_code, response.text)  # Add logging
     if response.status_code == 200:
         # Payment processed successfully, update membership
         new_expiration_date = compute_expiration_date()  # Ensure this returns a timestamp string
