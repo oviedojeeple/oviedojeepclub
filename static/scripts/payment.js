@@ -19,7 +19,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     
             fetch("/renew-membership", {
                 method: "POST",
-                body: JSON.stringify({}),
+                credentials: 'same-origin',  // Include credentials for session cookies
+                body: JSON.stringify({}),    // Use an empty object if no specific data is needed
                 headers: {
                     'Content-Type': 'application/json'
                 }
