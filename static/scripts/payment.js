@@ -12,14 +12,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Handle payment for membership renewal
     const renewPayButton = document.getElementById("renewPayButton");
     if (renewPayButton) {
-        renewPayButton.addEventListener("click", function (event) {
+        renewPayButton.addEventListener("click", async function (event) {
             event.preventDefault();
             renewPayButton.disabled = true;
             renewPayButton.textContent = "Processing...";
     
             fetch("/renew-membership", {
                 method: "POST",
-                body: JSON.stringify(paymentData),
+                body: JSON.stringify({}),
                 headers: {
                     'Content-Type': 'application/json'
                 }
