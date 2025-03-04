@@ -399,10 +399,23 @@ def renew_membership():
     print("##### DEBUG ##### In renew_membership() result of payment: ", result)
     if result.is_success():
         # Payment processed successfully, update membership
+        receipt_url = result.body.get('payment', {}).get('receipt_url')
+        session["receipt_url"] = receipt_url  # Store for later display
         new_expiration_date = compute_expiration_date()  # Ensure this returns a timestamp string
         azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{current_user.id}"
         update_payload = {"membership_expiration": new_expiration_date}
-        update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=headers)
+        
+        # Acquire a Graph API token (using your helper function)
+        graph_token = _acquire_graph_api_token()
+        if not graph_token:
+            return jsonify(success=False, message="Failed to acquire Graph API token"), 500
+        
+        graph_headers = {
+            "Authorization": f"Bearer {graph_token}",
+            "Content-Type": "application/json"
+        }
+        
+        update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=graph_headers)
         if update_response.status_code == 204:
             session['user']['membership_expiration'] = new_expiration_date  # Update session
             flash('Payment Successful! Your renewal has been updated.', 'success')
