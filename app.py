@@ -380,22 +380,25 @@ def renew_membership():
 
     square_payment_url = "https://connect.squareup.com/v2/checkout"
 
+    # Get the JSON payload
+    data = request.get_json()
+    nonce = data.get("nonce")  # This is the token from Square's tokenize()
+
+    if not nonce:
+        flash("Payment data is missing.", "danger")
+        return jsonify(success=False), 400
+
+    # Now use this nonce in your payment payload:
     payment_payload = {
-        "idempotency_key": str(os.urandom(16).hex()),  # Unique transaction ID
-        "order": {
-            "location_id": "YOUR_SQUARE_LOCATION_ID",
-            "line_items": [
-                {
-                    "name": "Oviedo Jeep Club Membership Renewal",
-                    "quantity": "1",
-                    "base_price_money": {
-                        "amount": 3000,  # $30.00 in cents
-                        "currency": "USD"
-                    }
-                }
-            ]
+        "source_id": nonce,
+        "idempotency_key": str(os.urandom(16).hex()),
+        "amount_money": {
+            "amount": 3000,  # $30.00 in cents
+            "currency": "USD"
         }
     }
+    # Update your URL if needed, for example:
+    square_payment_url = "https://connect.squareup.com/v2/payments"
 
     headers = {
         "Authorization": f"Bearer {os.getenv('SQUARE_ACCESS_TOKEN')}",
