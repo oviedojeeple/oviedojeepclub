@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     
             // Tokenize card details for renewal
             const tokenResult = await card.tokenize();
+            console.log("Tokenization result:", tokenResult);
             if (tokenResult.status !== "OK") {
                 showFlashMessage("Error processing payment details. Please try again.", "danger");
                 renewPayButton.disabled = false;
