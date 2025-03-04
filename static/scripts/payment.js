@@ -95,14 +95,35 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
     
-    // Function to display a flash message
+    // Utility to clear all flash messages
+    function clearFlashMessages() {
+        const flashContainer = document.getElementById("flash-messages");
+        if (flashContainer) {
+            flashContainer.innerHTML = '';
+        }
+    }
+    
+    // Modified flash message function
     function showFlashMessage(message, category) {
         const flashContainer = document.getElementById("flash-messages");
         if (!flashContainer) return;
-        flashContainer.innerHTML = ''; // Clear existing messages
-        const flashMessage = document.createElement("div");
-        flashMessage.className = `flash-message flash-${category}`;
-        flashMessage.textContent = message;
-        flashContainer.appendChild(flashMessage);
+    
+        // If it's a success message, clear previous messages and auto-dismiss after 30 seconds.
+        if (category === "success") {
+            clearFlashMessages();
+            const flashMessage = document.createElement("div");
+            flashMessage.className = `flash-message flash-${category}`;
+            flashMessage.textContent = message;
+            flashContainer.appendChild(flashMessage);
+            setTimeout(() => {
+                clearFlashMessages();
+            }, 15000); // 30 seconds
+        } else {
+            // For errors or warnings, just add the message (and keep them on screen)
+            const flashMessage = document.createElement("div");
+            flashMessage.className = `flash-message flash-${category}`;
+            flashMessage.textContent = message;
+            flashContainer.appendChild(flashMessage);
+        }
     }
 });
