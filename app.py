@@ -133,8 +133,9 @@ def auth_callback():
                 expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
                 member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
                 member_expiration_iso = expiration_date_obj.isoformat()         # e.g., "2025-03-31"
+                print("##### DEBUG ##### In auth_callback(): Member expiration dates: ", member_expiration, member_expiration_iso)
             except Exception as e:
-                print("##### ERROR ##### Converting timestamp failed:", e)
+                print("##### DEBUG ##### In auth_callback() Converting timestamp failed:", e)
                 member_expiration = "Invalid Date"
     
         # Safely get the job title (or default)
