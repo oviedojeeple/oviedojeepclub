@@ -4,39 +4,42 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.log("Application ID:", applicationId);
     const locationId = "LBA931MEK4R5V"; // Replace with your actual location ID
 
-    // Handle payment for membership renewal
-    const renewPayButton = document.getElementById("renewPayButton");
-    if (renewPayButton) {
-        renewPayButton.addEventListener("click", function () {
-            handlePayment(renewPayButton, "/renew-membership");
-        });
-    }
-
     // Initialize Square Payment Form
     const payments = Square.payments(applicationId, "sandbox");
     const card = await payments.card();
     await card.attach("#card-container");
 
-    // Function to display a flash message
-    function showFlashMessage(message, category) {
-        const flashContainer = document.getElementById("flash-messages");
-        if (!flashContainer) return;
-
-        // Clear existing messages
-        flashContainer.innerHTML = '';
-
-        // Create the new flash message
-        const flashMessage = document.createElement("div");
-        flashMessage.className = `flash-message flash-${category}`;
-        flashMessage.textContent = message;
-        flashContainer.appendChild(flashMessage);
-
-        // Automatically hide the message after 5 seconds
-        setTimeout(() => {
-            flashMessage.remove();
-        }, 5000);
-    }
-
+    // Handle payment for membership renewal
+    const renewPayButton = document.getElementById("renewPayButton");
+    if (renewPayButton) {
+        renewPayButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            renewPayButton.disabled = true;
+            renewPayButton.textContent = "Processing...";
+    
+            fetch("/renew-membership", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        location.reload(); // Refresh to show updates
+                    } else {
+                        showFlashMessage("Payment failed. Please try again.", "danger");
+                        renewPayButton.disabled = false;
+                        renewPayButton.textContent = renewPayButton.id === "renewPayButton" ? "Renew Now" : "Pay Renewal Fee";
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error processing payment:", error);
+                    showFlashMessage("An error occurred. Please try again.", "danger");
+                    renewPayButton.disabled = false;
+                    renewPayButton.textContent = renewPayButton.id === "renewPayButton" ? "Renew Now" : "Pay Renewal Fee";
+                });
+        });
+    }    
+    
     // Handle Payment Form Submission for Joining
     const joinPayButton = document.querySelector("#card-button");
     if (joinPayButton) {
@@ -74,31 +77,24 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
     }
+    
+    // Function to display a flash message
+    function showFlashMessage(message, category) {
+        const flashContainer = document.getElementById("flash-messages");
+        if (!flashContainer) return;
 
-    // Generic function to handle payments and disable buttons
-    function handlePayment(button, url) {
-        button.disabled = true;
-        button.textContent = "Processing...";
+        // Clear existing messages
+        flashContainer.innerHTML = '';
 
-        fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    location.reload(); // Refresh to show updates
-                } else {
-                    showFlashMessage("Payment failed. Please try again.", "danger");
-                    button.disabled = false;
-                    button.textContent = button.id === "renewPayButton" ? "Pay Now" : "Pay Membership Fee";
-                }
-            })
-            .catch((error) => {
-                console.error("Error processing payment:", error);
-                showFlashMessage("An error occurred. Please try again.", "danger");
-                button.disabled = false;
-                button.textContent = button.id === "renewPayButton" ? "Pay Now" : "Pay Membership Fee";
-            });
+        // Create the new flash message
+        const flashMessage = document.createElement("div");
+        flashMessage.className = `flash-message flash-${category}`;
+        flashMessage.textContent = message;
+        flashContainer.appendChild(flashMessage);
+
+        // Automatically hide the message after 5 seconds
+        setTimeout(() => {
+            flashMessage.remove();
+        }, 5000);
     }
 });
