@@ -408,9 +408,8 @@ def renew_membership():
         payment_data = response.json()
         checkout_url = payment_data['checkout']['checkout_page_url']
 
-        # Extend membership expiration to next year's March 31st
-        new_expiration = datetime.date.today().year + 1
-        new_expiration_date = f"{new_expiration}-03-31"
+        # Use the compute_expiration_date() function to get the new expiration as a proper timestamp
+        new_expiration_date = compute_expiration_date()
 
         azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{user['id']}"
         update_payload = {"membership_expiration": new_expiration_date}
@@ -420,11 +419,10 @@ def renew_membership():
         if update_response.status_code == 204:
             session['user']['membership_expiration'] = new_expiration_date  # Update session
             flash("Membership successfully renewed! New expiration: " + new_expiration_date, "success")
+            return jsonify(success=True, message="Membership renewed successfully")
         else:
             flash("Payment successful, but failed to update membership expiration.", "warning")
-        
-        return jsonify({"success": True})
-
+            return jsonify({"success": False})
     else:
         flash("Payment failed. Please try again.", "danger")
         return jsonify({"success": False})
