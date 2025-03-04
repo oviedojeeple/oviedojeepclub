@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             const nonce = tokenResult.token;
             const payload = { nonce }; // Now you have something to send
+            console.log("Payload to send:", JSON.stringify(payload));
     
             fetch("/renew-membership", {
                 method: "POST",
