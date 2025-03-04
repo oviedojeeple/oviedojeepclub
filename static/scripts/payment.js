@@ -7,51 +7,55 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Initialize Square Payment Form
     const payments = Square.payments(applicationId, "sandbox");
     const card = await payments.card();
-    const renewPayButton = document.getElementById("renewPayButton");
     await card.attach("#card-container");
 
+    // Define the renewPayButton element
+    const renewPayButton = document.getElementById("renewPayButton");
+
     // Handle payment for membership renewal
-    renewPayButton.addEventListener("click", async function (event) {
-        event.preventDefault();
-        renewPayButton.disabled = true;
-        renewPayButton.textContent = "Processing...";
+    if (renewPayButton) {
+        renewPayButton.addEventListener("click", async function (event) {
+            event.preventDefault();
+            renewPayButton.disabled = true;
+            renewPayButton.textContent = "Processing...";
     
-        // Tokenize card details for renewal
-        const tokenResult = await card.tokenize();
-        if (tokenResult.status !== "OK") {
-            showFlashMessage("Error processing payment details. Please try again.", "danger");
-            renewPayButton.disabled = false;
-            renewPayButton.textContent = "Renew Now";
-            return;
-        }
-        const nonce = tokenResult.token;
-        const payload = { nonce }; // now you have something to send
-    
-        fetch("/renew-membership", {
-            method: "POST",
-            credentials: 'same-origin',
-            body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload(); // Refresh to show updates
-            } else {
-                showFlashMessage("Payment failed. Please try again.", "danger");
+            // Tokenize card details for renewal
+            const tokenResult = await card.tokenize();
+            if (tokenResult.status !== "OK") {
+                showFlashMessage("Error processing payment details. Please try again.", "danger");
                 renewPayButton.disabled = false;
                 renewPayButton.textContent = "Renew Now";
+                return;
             }
-        })
-        .catch((error) => {
-            console.error("Error processing payment:", error);
-            showFlashMessage("An error occurred. Please try again.", "danger");
-            renewPayButton.disabled = false;
-            renewPayButton.textContent = "Renew Now";
+            const nonce = tokenResult.token;
+            const payload = { nonce }; // now you have something to send
+    
+            fetch("/renew-membership", {
+                method: "POST",
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh to show updates
+                } else {
+                    showFlashMessage("Payment failed. Please try again.", "danger");
+                    renewPayButton.disabled = false;
+                    renewPayButton.textContent = "Renew Now";
+                }
+            })
+            .catch((error) => {
+                console.error("Error processing payment:", error);
+                showFlashMessage("An error occurred. Please try again.", "danger");
+                renewPayButton.disabled = false;
+                renewPayButton.textContent = "Renew Now";
+            });
         });
-    });
+    }
     
     // Handle Payment Form Submission for Joining
     const joinPayButton = document.querySelector("#card-button");
