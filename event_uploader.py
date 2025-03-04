@@ -70,39 +70,25 @@ def validate_json(data):
     except SchemaError as e:
         return False, f"Schema Error: {e.message}"
 
-def upload_to_azure_blob(file_path, blob_name):
+def upload_event_data(event_data, blob_name):
     """
-    Uploads a file to Azure Blob Storage.
+    Accepts a single event data dictionary, wraps it in a list, validates it,
+    and uploads the JSON string to Azure Blob Storage.
     Returns a tuple: (success: bool, message: str)
     """
-    try:
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=blob_name)
-        with open(file_path, "rb") as file_data:
-            blob_client.upload_blob(file_data, overwrite=True)
-        return True, ""
-    except Exception as e:
-        return False, f"Azure Blob Upload Error: {e}"
-
-def process_event_file(file_path):
-    """
-    Processes an event JSON file:
-    - Loads and validates JSON data.
-    - Uploads the file to Azure Blob Storage if valid.
-    Returns a tuple: (success: bool, message: str)
-    """
-    try:
-        with open(file_path, "r", encoding="utf-8") as json_file:
-            data = json.load(json_file)
-    except json.JSONDecodeError as e:
-        return False, f"Error decoding JSON: {e}"
-
-    is_valid, message = validate_json(data)
+    # Wrap the event data in an array since our schema expects an array of events
+    data_array = [event_data]
+    is_valid, message = validate_json(data_array)
     if not is_valid:
         return False, message
 
-    success, upload_message = upload_to_azure_blob(file_path, os.path.basename(file_path))
-    if success:
-        return True, "File uploaded and validated successfully!"
-    else:
-        return False, upload_message
+    # Convert the JSON data into a string
+    json_str = json.dumps(data_array, indent=2)
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=blob_name)
+        blob_client.upload_blob(json_str, overwrite=True)
+        return True, "Event data uploaded successfully!"
+    except Exception as e:
+        return False, f"Azure Blob Upload Error: {e}"
+        
