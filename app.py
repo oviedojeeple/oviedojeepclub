@@ -385,26 +385,21 @@ def renew_membership():
         flash('User not authenticated.', 'danger')
         return jsonify(success=False, message="User not authenticated"), 401
 
-    # Use Square Payments API to process the payment with the nonce
-    square_payment_url = "https://connect.squareup.com/v2/payments"
-    payment_payload = {
+    # Process Square Payment
+    body = {
         "source_id": nonce,
-        "idempotency_key": str(os.urandom(16).hex()),
         "amount_money": {
-            "amount": 3000,  # $30.00 in cents
+            "amount": amount,
             "currency": "USD"
-        }
+        },
+        "idempotency_key": os.urandom(12).hex()
     }
-    headers = {
-        "Authorization": f"Bearer {os.getenv('SQUARE_ACCESS_TOKEN')}",
-        "Content-Type": "application/json"
-    }
-    response = requests.post(square_payment_url, json=payment_payload, headers=headers)
-    print("##### DEBUG ##### In renew_membership() Square payment response:", response.status_code, response.text)  # Add logging
-    if response.status_code == 200:
+    result = client.payments.create_payment(body)
+    print("##### DEBUG ##### In renew_membership() result of payment: ", result)
+    if result.is_success():
         # Payment processed successfully, update membership
         new_expiration_date = compute_expiration_date()  # Ensure this returns a timestamp string
-        azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{user['id']}"
+        azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{current_user.id}"
         update_payload = {"membership_expiration": new_expiration_date}
         update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=headers)
         if update_response.status_code == 204:
