@@ -52,13 +52,14 @@ client = Client(
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
-    def __init__(self, user_id, name, email, job_title=None, member_expiration_date=None):
+    def __init__(self, user_id, name, email, job_title=None, member_expiration_date=None, member_expiration_iso=None):
         print(f'##### DEBUG ##### In User class with {self} and {user_id} and {name} and {email}')
         self.id = user_id
         self.name = name
         self.email = email
         self.job_title = job_title
         self.member_expiration_date = member_expiration_date
+        self.member_expiration_iso = member_expiration_iso
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -70,7 +71,8 @@ def load_user(user_id):
             name=user_data["name"],
             email=user_data["email"],
             job_title=user_data.get("job_title"),
-            member_expiration_date=user_data.get("member_expiration_date")
+            member_expiration_date=user_data.get("member_expiration_date"),
+            member_expiration_iso=user_data.get("member_expiration_iso")
         )
     return None
     
@@ -154,10 +156,8 @@ def auth_callback():
         # Store the full user_data in session (for template use)
         session["user_data"] = user_data
     
-        # Remove extra keys that User() doesn't expect.
-        # (Assuming your User class expects only user_id, name, email, job_title, and member_expiration_date)
         user_data_for_login = {k: v for k, v in user_data.items() 
-                               if k in ["user_id", "name", "email", "job_title", "member_expiration_date"]}
+                               if k in ["user_id", "name", "email", "job_title", "member_expiration_date", "member_expiration_iso"]}
     
         login_user(User(**user_data_for_login), remember=True)
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
