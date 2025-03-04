@@ -6,8 +6,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Initialize Square Payment Form
     const payments = Square.payments(applicationId, "sandbox");
-    const card = await payments.card();
-    await card.attach("#card-container");
+    // Only initialize the card if the element exists (e.g. for renewals)
+    const cardContainer = document.getElementById("card-container");
+    let card; // declare card variable for later use
+    if (cardContainer) {
+        card = await payments.card();
+        await card.attach("#card-container");
+    }
 
     // Define the renewPayButton element
     const renewPayButton = document.getElementById("renewPayButton");
