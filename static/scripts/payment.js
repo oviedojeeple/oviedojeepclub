@@ -104,6 +104,5 @@ document.addEventListener("DOMContentLoaded", async function () {
         flashMessage.className = `flash-message flash-${category}`;
         flashMessage.textContent = message;
         flashContainer.appendChild(flashMessage);
-        setTimeout(() => flashMessage.remove(), 5000);
     }
 });
