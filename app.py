@@ -386,6 +386,7 @@ def renew_membership():
         return jsonify(success=False, message="User not authenticated"), 401
 
     # Process Square Payment
+    amount = 3000  # Membership Fee (e.g., $50.00)
     body = {
         "source_id": nonce,
         "amount_money": {
