@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const eventsContent = document.getElementById('events-section-content');
     const collectBtn = document.getElementById('collect-events-btn');
     const renewSection = document.getElementById('renew-section');
-
+    
     // Utility: Get URL parameters (if needed)
     function getQueryParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -16,11 +16,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function showSection(section) {
         if (profileSection) profileSection.style.display = 'none';
         if (eventsSection) eventsSection.style.display = 'none';
+        if (renewSection) renewSection.style.display = 'none';
         
         if (section === 'profile' && profileSection) {
             profileSection.style.display = 'block';
         } else if (section === 'events' && eventsSection) {
             eventsSection.style.display = 'block';
+        } else if (section === 'renew' && renewSection) {
+            renewSection.style.display = 'block';
         }
     }
 
@@ -72,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const menuEvents = document.getElementById('menu-events');
         const menuMerch = document.getElementById('menu-merchandise');
         const menuLogout = document.getElementById('menu-logout');
+        const menuRenew = document.getElementById('renewButton');
         
         menuProfile.addEventListener('click', () => { 
             showSection('profile'); 
@@ -86,6 +90,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (menuMerch) {
             menuMerch.addEventListener('click', () => {
                 window.open('https://goinkit.com/oviedo_jeep_club/shop/home', '_blank');
+            });
+        }
+        if (menuRenew) {
+            menuEvents.style.display = "inline-block";
+            menuEvents.addEventListener('click', () => { 
+                showSection('renew');
             });
         }
         if (menuLogout) {
