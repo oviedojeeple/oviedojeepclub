@@ -62,15 +62,23 @@
                     <td>Expiration Date</td>
                     <td>{{ user.member_expiration_date }}</td>
                   </tr>
-              </table>
                   <!-- (Optional) Debug Output -->
-                  {% if user_data %}
-                    {% set expiration_date = user_data.member_expiration_iso | to_date %}
-                    {% set today = now().date() %}
-                    <p>Today's Date: {{ today }}</p>
-                    <p>Membership Expiration Raw: {{ user_data.member_expiration_date }}</p>
-                    <p>Parsed Expiration Date: {{ expiration_date }}</p>
-                  {% endif %}
+                  {% set expiration_date = user_data.member_expiration_iso | to_date %}
+                  {% set today = now().date() %}
+                  <tr>
+                    <td>Today's Date</td>
+                    <td>{{ today }}</td>
+                  </tr>
+                  <tr>
+                    <td>Membership Expiration Raw</td>
+                    <td>{{ user_data.member_expiration_date }}</td>
+                  </tr>
+                  <tr>
+                    <td>Parsed Expiration Date</td>
+                    <td>{{ expiration_date }}</td>
+                  </tr>
+                  {% endif %}                  
+              </table>
           </section>
           <section id="events-section" class="content-section">
               <h2>Oviedo Jeep Club Public Events</h2>
