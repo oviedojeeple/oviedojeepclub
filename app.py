@@ -6,6 +6,7 @@ from datetime import datetime
 from azure.storage.blob import BlobServiceClient
 from square.client import Client
 from urllib.parse import quote
+from event_uploader import process_event_file
 import msal
 import os, time, requests, json
 
@@ -181,6 +182,50 @@ def blob_events():
     except Exception as e:
         print("Error reading blob events:", e)
         return jsonify({"error": "Unable to read events from blob"}), 500
+        
+@app.route("/create_event", methods=["GET", "POST"])
+def create_event():
+    print("##### DEBUG ##### In create_event()")
+    if request.method == "POST":
+        # Collect form fields. Use .get() to allow missing (optional) fields.
+        event = {
+            "id": request.form.get("id", "").strip(),
+            "name": request.form.get("name", "").strip(),
+            "description": request.form.get("description", "").strip(),
+            "start_time": request.form.get("start_time", "").strip(),  # Should be in ISO 8601 format
+            "end_time": request.form.get("end_time", "").strip() or None,
+            "place": {
+                "name": request.form.get("place_name", "").strip(),
+                "location": {
+                    "city": request.form.get("city", "").strip(),
+                    "country": request.form.get("country", "").strip(),
+                    "latitude": float(request.form.get("latitude", 0)),
+                    "longitude": float(request.form.get("longitude", 0)),
+                    "state": request.form.get("state", "").strip(),
+                    "street": request.form.get("street", "").strip() or None,
+                    "zip": request.form.get("zip", "").strip() or None,
+                },
+                "id": request.form.get("place_id", "").strip() or None,
+            },
+            "cover": {
+                "offset_x": int(request.form.get("offset_x", 0)),
+                "offset_y": int(request.form.get("offset_y", 0)),
+                "source": request.form.get("cover_source", "").strip(),
+                "id": request.form.get("cover_id", "").strip() or None,
+            },
+        }
+
+        # Generate a blob name, for example using the event ID.
+        blob_name = f"event_{event['id']}.json"
+        success, message = upload_event_data(event, blob_name)
+        if success:
+            flash(message, "success")
+        else:
+            flash(message, "danger")
+        return redirect(url_for("index"))
+
+    # GET request – render the dynamic event creation form
+    return render_template("create_event.html")
 
 @app.route('/facebook/callback')
 @login_required
