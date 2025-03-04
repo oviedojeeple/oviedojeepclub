@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Define the renewPayButton element
     const renewPayButton = document.getElementById("renewPayButton");
-
+    
     // Handle payment for membership renewal
     if (renewPayButton) {
         renewPayButton.addEventListener("click", async function (event) {
@@ -28,11 +28,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
             const nonce = tokenResult.token;
-            const payload = { nonce }; // now you have something to send
+            const payload = { nonce }; // Now you have something to send
     
             fetch("/renew-membership", {
                 method: "POST",
-                credentials: 'same-origin',
+                credentials: 'same-origin',  // Ensures session cookies are sent
                 body: JSON.stringify(payload),
                 headers: {
                     'Content-Type': 'application/json'
@@ -99,19 +99,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     function showFlashMessage(message, category) {
         const flashContainer = document.getElementById("flash-messages");
         if (!flashContainer) return;
-
-        // Clear existing messages
-        flashContainer.innerHTML = '';
-
-        // Create the new flash message
+        flashContainer.innerHTML = ''; // Clear existing messages
         const flashMessage = document.createElement("div");
         flashMessage.className = `flash-message flash-${category}`;
         flashMessage.textContent = message;
         flashContainer.appendChild(flashMessage);
-
-        // Automatically hide the message after 5 seconds
-        setTimeout(() => {
-            flashMessage.remove();
-        }, 5000);
+        setTimeout(() => flashMessage.remove(), 5000);
     }
 });
