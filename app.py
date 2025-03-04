@@ -374,11 +374,13 @@ def renew_membership():
     nonce = data.get("nonce")
     if not nonce:
         # Return a JSON error if no nonce is provided
+        flash('Missing card information.', 'danger')
         return jsonify(success=False, message="Missing card information"), 400
 
     user = session.get('user')
-    if not user:
+    if not current_user.is_authenticated:
         # Instead of a redirect, return a JSON error
+        flash('User not authenticated.', 'danger')
         return jsonify(success=False, message="User not authenticated"), 401
 
     # Use Square Payments API to process the payment with the nonce
@@ -404,10 +406,13 @@ def renew_membership():
         update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=headers)
         if update_response.status_code == 204:
             session['user']['membership_expiration'] = new_expiration_date  # Update session
+            flash('Payment Successful! Your renewal has been updated.', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
         else:
+            flash('Payment succeeded but failed to update membership. Share error with Administrator.', 'danger')
             return jsonify(success=False, message="Payment succeeded but failed to update membership"), 500
     else:
+        flash('Payment failed. Share error with Administrator.', 'danger')
         return jsonify(success=False, message="Payment failed"), 400
 
 @app.route('/sync-public-events')
