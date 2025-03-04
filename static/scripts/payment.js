@@ -4,14 +4,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.log("Application ID:", applicationId);
     const locationId = "LBA931MEK4R5V"; // Replace with your actual location ID
 
-    // Show the renew membership section when the renew button is clicked
-    const renewButton = document.getElementById("renewButton");
-    if (renewButton) {
-        renewButton.addEventListener("click", function () {
-            document.getElementById("renew-section").style.display = "block";
-        });
-    }
-
     // Handle payment for membership renewal
     const renewPayButton = document.getElementById("renewPayButton");
     if (renewPayButton) {
