@@ -19,24 +19,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     
             fetch("/renew-membership", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(paymentData),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        location.reload(); // Refresh to show updates
-                    } else {
-                        showFlashMessage("Payment failed. Please try again.", "danger");
-                        renewPayButton.disabled = false;
-                        renewPayButton.textContent = renewPayButton.id === "renewPayButton" ? "Renew Now" : "Pay Renewal Fee";
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error processing payment:", error);
-                    showFlashMessage("An error occurred. Please try again.", "danger");
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh to show updates
+                } else {
+                    showFlashMessage("Payment failed. Please try again.", "danger");
                     renewPayButton.disabled = false;
                     renewPayButton.textContent = renewPayButton.id === "renewPayButton" ? "Renew Now" : "Pay Renewal Fee";
-                });
+                }
+            })
+            .catch((error) => {
+                console.error("Error processing payment:", error);
+                showFlashMessage("An error occurred. Please try again.", "danger");
+                renewPayButton.disabled = false;
+                renewPayButton.textContent = renewPayButton.id === "renewPayButton" ? "Renew Now" : "Pay Renewal Fee";
+            });
         });
     }    
     
