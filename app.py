@@ -403,11 +403,12 @@ def renew_membership():
         session["receipt_url"] = receipt_url  # Store for later display
         new_expiration_date = compute_expiration_date()  # Ensure this returns a timestamp string
         azure_ad_b2c_api_url = f"https://graph.microsoft.com/v1.0/users/{current_user.id}"
-        update_payload = {"membership_expiration": new_expiration_date}
+        update_payload = {"extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate": new_expiration_date}
         
         # Acquire a Graph API token (using your helper function)
         graph_token = _acquire_graph_api_token()
         if not graph_token:
+            flash('Payment succeeded but failed to update membership. Share error with Administrator. Graph Token missing.', 'danger')
             return jsonify(success=False, message="Failed to acquire Graph API token"), 500
         
         graph_headers = {
