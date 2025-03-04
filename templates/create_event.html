@@ -1,0 +1,89 @@
+<!-- templates/create_event.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create New Event</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Create New Event</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+  <form action="{{ url_for('create_event') }}" method="post">
+    <fieldset>
+      <legend>Event Details</legend>
+      <label for="id">Event ID:</label>
+      <input type="text" id="id" name="id" required>
+      
+      <label for="name">Event Name:</label>
+      <input type="text" id="name" name="name" required>
+      
+      <label for="description">Description:</label>
+      <textarea id="description" name="description" required></textarea>
+      
+      <label for="start_time">Start Time (ISO 8601):</label>
+      <input type="datetime-local" id="start_time" name="start_time" required>
+      
+      <label for="end_time">End Time (ISO 8601, optional):</label>
+      <input type="datetime-local" id="end_time" name="end_time">
+    </fieldset>
+    
+    <fieldset>
+      <legend>Place Details</legend>
+      <label for="place_name">Place Name:</label>
+      <input type="text" id="place_name" name="place_name" required>
+      
+      <label for="city">City:</label>
+      <input type="text" id="city" name="city" required>
+      
+      <label for="country">Country:</label>
+      <input type="text" id="country" name="country" required>
+      
+      <label for="latitude">Latitude:</label>
+      <input type="number" step="any" id="latitude" name="latitude" required>
+      
+      <label for="longitude">Longitude:</label>
+      <input type="number" step="any" id="longitude" name="longitude" required>
+      
+      <label for="state">State:</label>
+      <input type="text" id="state" name="state" required>
+      
+      <label for="street">Street (optional):</label>
+      <input type="text" id="street" name="street">
+      
+      <label for="zip">ZIP (optional):</label>
+      <input type="text" id="zip" name="zip">
+      
+      <label for="place_id">Place ID (optional):</label>
+      <input type="text" id="place_id" name="place_id">
+    </fieldset>
+    
+    <fieldset>
+      <legend>Cover Details</legend>
+      <label for="offset_x">Cover Offset X (0-100):</label>
+      <input type="number" id="offset_x" name="offset_x" min="0" max="100" value="50" required>
+      
+      <label for="offset_y">Cover Offset Y (0-100):</label>
+      <input type="number" id="offset_y" name="offset_y" min="0" max="100" value="50" required>
+      
+      <label for="cover_source">Cover Image URL:</label>
+      <input type="url" id="cover_source" name="cover_source" required>
+      
+      <label for="cover_id">Cover ID (optional):</label>
+      <input type="text" id="cover_id" name="cover_id">
+    </fieldset>
+    
+    <button type="submit">Create Event</button>
+  </form>
+  
+  <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+</body>
+</html>
