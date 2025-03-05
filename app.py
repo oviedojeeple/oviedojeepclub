@@ -455,7 +455,7 @@ def renew_membership():
         
         update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=graph_headers)
         if update_response.status_code == 204:
-            print("##### DEBUG ##### In renew_membership() session details: ", result)
+            print("##### DEBUG ##### In renew_membership() session details: ", session)
             session['user']['member_expiration_date'] = new_expiration_date  # Update session
             flash('Payment Successful! Your renewal has been updated.', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
