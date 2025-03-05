@@ -463,11 +463,13 @@ def renew_membership():
                         timestamp_int = timestamp_int / 1000
                     expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
                     member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
-                    print("##### DEBUG ##### In renew_membership(): Member expiration date: ", member_expiration)
+                    member_expiration_iso = expiration_date_obj.isoformat()         # e.g., "2025-03-31"
+                    print("##### DEBUG ##### In renew_membership(): Member expiration dates: ", member_expiration, member_expiration_iso)
                 except Exception as e:
                     print("##### DEBUG ##### In renew_membership() Converting timestamp failed:", e)
                     member_expiration = "Invalid Date"
             session['user_data']['member_expiration_date'] = member_expiration  # Update session
+            session['user_data']['member_expiration_iso'] = member_expiration_iso  # Update session
             flash('Payment Successful! Your renewal has been updated!', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
         else:
