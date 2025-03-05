@@ -80,12 +80,20 @@
             <!-- Show Renew Button only if today is between Jan 1 and Mar 31 of the expiration year -->
             {% if expiration_date and today >= expiration_date.replace(month=1, day=1) and today <= expiration_date.replace(month=3, day=31) %}
                 <section id="renew-section" class="content-section" style="display: none;">
+                  {% if session.receipt_url %}
+                    <div class="receipt-info">
+                        <p>Thank you for your payment! You can view your receipt here: 
+                           <a href="{{ session.receipt_url }}" target="_blank">View Receipt</a>
+                        </p>
+                    </div>
+                  {% else %}
                     <h2>Renew Your Membership</h2>
                     <p>The renewal fee is <strong>$30</strong>. Please click below to proceed.</p>
                     <!-- Square Payment Element -->
                     <div id="card-container"></div>
                     <button id="renewPayButton" class="btn btn-success">Renew Now</button>
                     <input type="hidden" name="nonce" id="card-nonce">
+                  {% endif %}
                 </section>
             {% endif %}
           {% endif %}
