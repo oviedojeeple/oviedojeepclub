@@ -275,14 +275,6 @@ def login():
     session["flow"] = _build_auth_code_flow()
     return redirect(session["flow"]["auth_uri"])
 
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    print("##### DEBUG ##### In dashboard()")
-    user = session.get("user")
-    print(f'##### DEBUG ##### In dashboard() - user:: {user}')
-    return f"Hello, {user.name}! <a href='/logout'>Logout</a>"
-
 # Data Deletion Route
 @app.route('/delete-data', methods=['GET', 'POST'])
 def delete_data():
@@ -463,6 +455,7 @@ def renew_membership():
         
         update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=graph_headers)
         if update_response.status_code == 204:
+            print("##### DEBUG ##### In renew_membership() session details: ", result)
             session['user']['member_expiration_date'] = new_expiration_date  # Update session
             flash('Payment Successful! Your renewal has been updated.', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
