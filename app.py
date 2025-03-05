@@ -4,6 +4,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
+from azure.communication.email import EmailClient, EmailMessage, EmailRecipients, EmailAddress
 from square.client import Client
 from urllib.parse import quote
 from event_uploader import upload_event_data
@@ -703,6 +704,21 @@ def sort_events_by_date_desc(events):
         key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
     )
     
+def send_email(subject, recipient, body):
+    connection_str = os.getenv("AZURE_COMM_CONNECTION_STRING")
+    email_client = EmailClient.from_connection_string(connection_str)
+    message = EmailMessage(
+        sender= os.getenv("AZURE_COMM_CONNECTION_STRING_SENDER"),  # Must be verified with Azure ECS
+        content={
+            "subject": subject,
+            "plainText": body
+        },
+        recipients=EmailRecipients(
+            to=[EmailAddress(email=recipient)]
+        )
+    )
+    response = email_client.send(message)
+
 class Main(Resource):
     def post(self):
         return jsonify({'message': 'Welcome to the Oviedo Jeep Club Flask REST App'})
