@@ -6,7 +6,7 @@ from datetime import datetime
 from azure.storage.blob import BlobServiceClient
 from square.client import Client
 from urllib.parse import quote
-from event_uploader import process_event_file
+from event_uploader import upload_event_data
 import msal
 import os, time, requests, json
 
