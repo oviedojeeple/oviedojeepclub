@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const eventsSection = document.getElementById('events-section');
     const eventsContent = document.getElementById('events-section-content');
     const collectBtn = document.getElementById('collect-events-btn');
+    const createEventBtn = document.getElementById('create-event-btn');
     const renewSection = document.getElementById('renew-section');
     
     // Utility: Get URL parameters (if needed)
@@ -133,6 +134,15 @@ document.addEventListener('DOMContentLoaded', function () {
         collectBtn.addEventListener('click', () => {
             document.getElementById('collect-events-btn').addEventListener('click', function() {
               window.location.href = '/sync-public-events';
+            });
+        });
+    }
+
+    // Set up the "Create Event" button listener to trigger the sync process
+    if (createEventBtn) {
+        createEventBtn.addEventListener('click', () => {
+            document.getElementById('create-event-btn').addEventListener('click', function() {
+              window.location.href = '/create_event';
             });
         });
     }
