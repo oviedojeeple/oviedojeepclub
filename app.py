@@ -4,7 +4,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
-from azure.communication.email import EmailClient, EmailContent, EmailRecipients, EmailAddress
+from azure.communication.email import EmailClient
 from square.client import Client
 from urllib.parse import quote
 from event_uploader import upload_event_data
@@ -707,28 +707,23 @@ def sort_events_by_date_desc(events):
         events,
         key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
     )
-    
+
 def send_membership_renewal_email(recipient_email, recipient_name):
     print("##### DEBUG ##### In send_membership_renewal_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
-    
-    # Define the email content
-    email_content = EmailContent(
-        subject="Membership Renewal Confirmation",
-        plain_text="Your membership has been renewed successfully!"
-    )
-    
-    # Define the recipients
-    email_recipients = EmailRecipients(
-        to=[EmailAddress(email=recipient_email, display_name=recipient_name)]
-    )
-    
-    # Send the email
     try:
         response = email_client.send(
             sender=AZURE_COMM_CONNECTION_STRING_SENDER,  # Replace with your verified sender email
-            content=email_content,
-            recipients=email_recipients,
+            content={
+                "subject": "Membership Renewal Confirmation",
+                "plainText": "Your membership has been renewed successfully!",
+                "html": "<html><body><h1>Membership Renewal Confirmation</h1><p>Your membership has been renewed successfully!</p></body></html>"
+            },
+            recipients={
+                "to": [
+                    {"address": recipient_email, "displayName": recipient_name}
+                ]
+            }
         )
         print("Email sent! Response:", response)
     except Exception as e:
