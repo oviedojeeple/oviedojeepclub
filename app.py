@@ -4,7 +4,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
-from azure.communication.email import EmailClient, EmailMessage, EmailRecipients, EmailAddress
+from azure.communication.email import EmailClient, EmailContent, EmailRecipients, EmailAddress
 from square.client import Client
 from urllib.parse import quote
 from event_uploader import upload_event_data
@@ -43,6 +43,10 @@ SQUARE_ACCESS_TOKEN = os.getenv("SQUARE_ACCESS_TOKEN")
 print(f'##### DEBUG ##### TOKEN_URL:: {SQUARE_ACCESS_TOKEN}')
 SQUARE_APPLICATION_ID = os.getenv("SQUARE_APPLICATION_ID")
 print(f'##### DEBUG ##### TOKEN_URL:: {SQUARE_APPLICATION_ID}')
+AZURE_COMM_CONNECTION_STRING = os.getenv("AZURE_COMM_CONNECTION_STRING")
+print(f'##### DEBUG ##### TOKEN_URL:: {AZURE_COMM_CONNECTION_STRING}')
+AZURE_COMM_CONNECTION_STRING_SENDER = os.getenv("AZURE_COMM_CONNECTION_STRING_SENDER")
+print(f'##### DEBUG ##### TOKEN_URL:: {AZURE_COMM_CONNECTION_STRING_SENDER}')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -704,20 +708,31 @@ def sort_events_by_date_desc(events):
         key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
     )
     
-def send_email(subject, recipient, body):
-    connection_str = os.getenv("AZURE_COMM_CONNECTION_STRING")
-    email_client = EmailClient.from_connection_string(connection_str)
-    message = EmailMessage(
-        sender= os.getenv("AZURE_COMM_CONNECTION_STRING_SENDER"),  # Must be verified with Azure ECS
-        content={
-            "subject": subject,
-            "plainText": body
-        },
-        recipients=EmailRecipients(
-            to=[EmailAddress(email=recipient)]
-        )
+def send_membership_renewal_email(recipient_email, recipient_name):
+    print("##### DEBUG ##### In send_membership_renewal_email()")
+    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+    
+    # Define the email content
+    email_content = EmailContent(
+        subject="Membership Renewal Confirmation",
+        plain_text="Your membership has been renewed successfully!"
     )
-    response = email_client.send(message)
+    
+    # Define the recipients
+    email_recipients = EmailRecipients(
+        to=[EmailAddress(email=recipient_email, display_name=recipient_name)]
+    )
+    
+    # Send the email
+    try:
+        response = email_client.send(
+            sender=AZURE_COMM_CONNECTION_STRING_SENDER,  # Replace with your verified sender email
+            content=email_content,
+            recipients=email_recipients,
+        )
+        print("Email sent! Response:", response)
+    except Exception as e:
+        print("Error sending email:", e)
 
 class Main(Resource):
     def post(self):
