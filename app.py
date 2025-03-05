@@ -456,17 +456,17 @@ def renew_membership():
         update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=graph_headers)
         if update_response.status_code == 204:
             print("##### DEBUG ##### In renew_membership() session details: ", session)
-            if member_expiration_raw:
-            try:
-                timestamp_int = int(new_expiration_date)
-                if timestamp_int > 1e10:  # Convert from milliseconds if necessary
-                    timestamp_int = timestamp_int / 1000
-                expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
-                member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
-                print("##### DEBUG ##### In renew_membership(): Member expiration date: ", member_expiration)
-            except Exception as e:
-                print("##### DEBUG ##### In renew_membership() Converting timestamp failed:", e)
-                member_expiration = "Invalid Date"
+            if new_expiration_date:
+                try:
+                    timestamp_int = int(new_expiration_date)
+                    if timestamp_int > 1e10:  # Convert from milliseconds if necessary
+                        timestamp_int = timestamp_int / 1000
+                    expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
+                    member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
+                    print("##### DEBUG ##### In renew_membership(): Member expiration date: ", member_expiration)
+                except Exception as e:
+                    print("##### DEBUG ##### In renew_membership() Converting timestamp failed:", e)
+                    member_expiration = "Invalid Date"
             session['user_data']['member_expiration_date'] = member_expiration  # Update session
             flash('Payment Successful! Your renewal has been updated!', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
