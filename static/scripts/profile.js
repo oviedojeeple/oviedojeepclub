@@ -83,6 +83,29 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    // Attach event delegation for delete buttons on the events container.
+    if (eventsContent) {
+        eventsContent.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('delete-event-btn')) {
+                const eventId = e.target.getAttribute('data-event-id');
+                if (confirm("Are you sure you want to delete this event?")) {
+                    fetch(`/delete_event/${eventId}`, { method: 'POST' })
+                        .then(response => {
+                            if (response.ok) {
+                                loadBlobEvents(); // Reload events after deletion.
+                            } else {
+                                alert("Error deleting event.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error deleting event:", error);
+                            alert("Error deleting event.");
+                        });
+                }
+            }
+        });
+    }
+    
     // Set up menu button listeners
     if (isAuthenticated) {
         const menuProfile = document.getElementById('menu-profile');
@@ -155,26 +178,4 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = '/create_event';
         });
     }
-    
-    // Attach a click listener for delete buttons
-    document.querySelectorAll('.delete-event-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const eventId = this.getAttribute('data-event-id');
-            if (confirm("Are you sure you want to delete this event?")) {
-                // Send a POST request to the delete endpoint.
-                fetch(`/delete_event/${eventId}`, { method: 'POST' })
-                  .then(response => {
-                      if (response.ok) {
-                          loadBlobEvents(); // Reload events
-                      } else {
-                          showFlashMessage("Error deleting event.", "danger");
-                      }
-                  })
-                  .catch(error => {
-                      console.error("Error deleting event:", error);
-                      showFlashMessage("Error deleting event.", "danger");
-                  });
-            }
-        });
-    });
 });
