@@ -188,17 +188,39 @@ def blob_events():
         print("Error reading blob events:", e)
         return jsonify({"error": "Unable to read events from blob"}), 500
         
+from azure.storage.blob import BlobServiceClient
+import uuid
+
 @app.route("/create_event", methods=["GET", "POST"])
 def create_event():
     print("##### DEBUG ##### In create_event()")
     if request.method == "POST":
-        # Generate a unique event id using the current time in milliseconds.
         import time
         unique_event_id = "OJC" + str(int(time.time() * 1000))
         
+        # Handle file upload for cover image if provided
+        cover_image_file = request.files.get("cover_image")
+        cover_image_url = None
+        if cover_image_file:
+            try:
+                connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+                blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+                container_name = "event-images"  # Make sure this container exists
+                # Create a unique blob name using uuid
+                file_extension = cover_image_file.filename.rsplit(".", 1)[-1]
+                blob_name = f"{unique_event_id}_{uuid.uuid4().hex}.{file_extension}"
+                blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+                blob_client.upload_blob(cover_image_file, overwrite=True)
+                # Generate the URL for the uploaded image (assuming container is public)
+                cover_image_url = blob_client.url
+            except Exception as e:
+                print("Error uploading cover image:", e)
+                flash("Error uploading cover image.", "danger")
+                return redirect(url_for("create_event"))
+        
         # Build the event data; ignore the 'id' field from the form.
         event = {
-            "id": unique_event_id,  # Auto-generated unique ID.
+            "id": unique_event_id,
             "name": request.form.get("name", "").strip(),
             "description": request.form.get("description", "").strip(),
             "start_time": request.form.get("start_time", "").strip(),
@@ -219,16 +241,15 @@ def create_event():
             "cover": {
                 "offset_x": int(request.form.get("offset_x", 0)),
                 "offset_y": int(request.form.get("offset_y", 0)),
-                "source": request.form.get("cover_source", "").strip(),
+                # Use the uploaded image URL if available, otherwise use the URL from the form.
+                "source": cover_image_url or request.form.get("cover_source", "").strip(),
                 "id": request.form.get("cover_id", "").strip() or None,
             },
         }
         
-        # Load existing events from the blob
-        events_list = get_events_from_blob()
+        # Load existing events from the blob, append new event, then re-upload.
+        events_list = get_events_from_blob()  # your helper function to retrieve events
         events_list.append(event)
-        
-        # Upload the updated events list to the same blob
         success, message = upload_events_to_blob(events_list)
         if success:
             flash(message, "success")
@@ -236,7 +257,6 @@ def create_event():
             flash(message, "danger")
         return redirect(url_for("index"))
     
-    # GET request – render the dynamic event creation form
     return render_template("create_event.html")
     
 @app.route('/facebook/callback')
