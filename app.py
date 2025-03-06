@@ -205,7 +205,14 @@ def create_event():
             try:
                 connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
                 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-                container_name = "event-images"  # Make sure this container exists
+                container_name = "event-images"  # Ensure this container exists or create it
+                # Check if container exists; if not, create it.
+                try:
+                    container_client = blob_service_client.get_container_client(container_name)
+                    container_client.get_container_properties()  # Will raise an exception if not exists
+                except Exception:
+                    container_client = blob_service_client.create_container(container_name)
+                
                 # Create a unique blob name using uuid
                 file_extension = cover_image_file.filename.rsplit(".", 1)[-1]
                 blob_name = f"{unique_event_id}_{uuid.uuid4().hex}.{file_extension}"
