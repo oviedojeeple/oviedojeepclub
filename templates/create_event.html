@@ -14,8 +14,8 @@
   </header>
 
   <nav class="menu">
-    <button id="menu-profile" class="nav-btn">Profile</button>
-    <button id="menu-logout" class="nav-btn">Logout</button>
+    <a id="menu-home" class="nav-btn" href="{{ url_for('index') }}">Home</a>
+    <a id="menu-logout" class="nav-btn" href="{{ url_for('logout') }}">Logout</a>
   </nav>
 
   <main>
@@ -23,100 +23,141 @@
       <h2>Create New Event</h2>
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          <ul class="flashes">
+          <div id="flash-messages">
             {% for category, message in messages %}
-              <li class="{{ category }}">{{ message }}</li>
+              <div class="flash-message flash-{{ category }}">{{ message }}</div>
             {% endfor %}
-          </ul>
+          </div>
         {% endif %}
       {% endwith %}
-      <form action="{{ url_for('create_event') }}" method="post">
-        <fieldset>
-          <legend>Event Details</legend>
-          <div class="form-group">
-            <label for="id">Event ID:</label>
-            <input type="text" id="id" name="id" required>
-          </div>
-          <div class="form-group">
-            <label for="name">Event Name:</label>
-            <input type="text" id="name" name="name" required>
-          </div>
-          <div class="form-group">
-            <label for="description">Description:</label>
-            <textarea id="description" name="description" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="start_time">Start Time (ISO 8601):</label>
-            <input type="datetime-local" id="start_time" name="start_time" required>
-          </div>
-          <div class="form-group">
-            <label for="end_time">End Time (optional):</label>
-            <input type="datetime-local" id="end_time" name="end_time">
-          </div>
-        </fieldset>
+      <!-- Using the join container style from style.css -->
+      <div id="join-section">
+        <form action="{{ url_for('create_event') }}" method="post">
+          <fieldset>
+            <legend>Event Details</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="id">Event ID:</label>
+                <input type="text" id="id" name="id" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Event Name:</label>
+                <input type="text" id="name" name="name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="start_time">Start Time (ISO 8601):</label>
+                <input type="datetime-local" id="start_time" name="start_time" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="end_time">End Time (optional):</label>
+                <input type="datetime-local" id="end_time" name="end_time">
+              </div>
+            </div>
+          </fieldset>
 
-        <fieldset>
-          <legend>Place Details</legend>
-          <div class="form-group">
-            <label for="place_name">Place Name:</label>
-            <input type="text" id="place_name" name="place_name" required>
-          </div>
-          <div class="form-group">
-            <label for="city">City:</label>
-            <input type="text" id="city" name="city" required>
-          </div>
-          <div class="form-group">
-            <label for="country">Country:</label>
-            <input type="text" id="country" name="country" required>
-          </div>
-          <div class="form-group">
-            <label for="latitude">Latitude:</label>
-            <input type="number" step="any" id="latitude" name="latitude" required>
-          </div>
-          <div class="form-group">
-            <label for="longitude">Longitude:</label>
-            <input type="number" step="any" id="longitude" name="longitude" required>
-          </div>
-          <div class="form-group">
-            <label for="state">State:</label>
-            <input type="text" id="state" name="state" required>
-          </div>
-          <div class="form-group">
-            <label for="street">Street (optional):</label>
-            <input type="text" id="street" name="street">
-          </div>
-          <div class="form-group">
-            <label for="zip">ZIP (optional):</label>
-            <input type="text" id="zip" name="zip">
-          </div>
-          <div class="form-group">
-            <label for="place_id">Place ID (optional):</label>
-            <input type="text" id="place_id" name="place_id">
-          </div>
-        </fieldset>
+          <fieldset>
+            <legend>Place Details</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="place_name">Place Name:</label>
+                <input type="text" id="place_name" name="place_name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" id="country" name="country" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="latitude">Latitude:</label>
+                <input type="number" step="any" id="latitude" name="latitude" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="longitude">Longitude:</label>
+                <input type="number" step="any" id="longitude" name="longitude" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="state">State:</label>
+                <input type="text" id="state" name="state" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="street">Street (optional):</label>
+                <input type="text" id="street" name="street">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="zip">ZIP (optional):</label>
+                <input type="text" id="zip" name="zip">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="place_id">Place ID (optional):</label>
+                <input type="text" id="place_id" name="place_id">
+              </div>
+            </div>
+          </fieldset>
 
-        <fieldset>
-          <legend>Cover Details</legend>
-          <div class="form-group">
-            <label for="offset_x">Cover Offset X (0-100):</label>
-            <input type="number" id="offset_x" name="offset_x" min="0" max="100" value="50" required>
-          </div>
-          <div class="form-group">
-            <label for="offset_y">Cover Offset Y (0-100):</label>
-            <input type="number" id="offset_y" name="offset_y" min="0" max="100" value="50" required>
-          </div>
-          <div class="form-group">
-            <label for="cover_source">Cover Image URL:</label>
-            <input type="url" id="cover_source" name="cover_source" required>
-          </div>
-          <div class="form-group">
-            <label for="cover_id">Cover ID (optional):</label>
-            <input type="text" id="cover_id" name="cover_id">
-          </div>
-        </fieldset>
+          <fieldset>
+            <legend>Cover Details</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="offset_x">Cover Offset X (0-100):</label>
+                <input type="number" id="offset_x" name="offset_x" min="0" max="100" value="50" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="offset_y">Cover Offset Y (0-100):</label>
+                <input type="number" id="offset_y" name="offset_y" min="0" max="100" value="50" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cover_source">Cover Image URL:</label>
+                <input type="url" id="cover_source" name="cover_source" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cover_id">Cover ID (optional):</label>
+                <input type="text" id="cover_id" name="cover_id">
+              </div>
+            </div>
+          </fieldset>
 
-        <button type="submit">Create Event</button>
-      </form>
+          <div class="form-row" style="justify-content: center;">
+            <button type="submit">Create Event</button>
+          </div>
+        </form>
+      </div>
     </section>
   </main>
 
