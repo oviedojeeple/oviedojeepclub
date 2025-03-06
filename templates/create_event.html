@@ -113,8 +113,6 @@
               </div>
             </div>
           </fieldset>
-
-          <!-- Cover details and submit button remain unchanged -->
           <fieldset>
             <legend>Cover Details</legend>
             <div class="form-row">
@@ -142,7 +140,6 @@
               </div>
             </div>
           </fieldset>
-
           <div class="form-row" style="justify-content: center;">
             <button type="submit">Create Event</button>
           </div>
@@ -203,8 +200,9 @@
       reverseGeocode(e.latlng.lat, e.latlng.lng);
     });
 
-    // Initialize the geocoder control and add it to the map
+    // Initialize the Photon geocoder control and add it to the map
     var geocoder = L.Control.geocoder({
+      geocoder: L.Control.Geocoder.photon(),  // Use Photon for richer POI results
       defaultMarkGeocode: false,
       position: 'topright'
     })
