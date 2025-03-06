@@ -106,6 +106,34 @@ body {
     background-color: #999; /* Highlight active button */
 }
 
+/* Sub-menu container styling */
+.sub-menu {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    background-color: #333; /* Same dark background as main menu */
+    padding: 5px;  /* Smaller padding than the main nav */
+    border-radius: 5px;
+    max-width: 500px;
+    width: 80%;
+    margin: 0 auto 20px auto;
+    gap: 10px;
+}
+
+/* Sub-menu buttons styling */
+.sub-menu .sub-nav-btn {
+    padding: 5px 10px; /* Smaller than main nav buttons */
+    font-size: 14px;   /* Slightly smaller font */
+    min-width: 60px;
+    max-width: 120px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.sub-menu .sub-nav-btn:hover {
+    background-color: #777;
+}
+
 .receipt-info {
     border: 1px solid #ddd;
     border-radius: 5px;
