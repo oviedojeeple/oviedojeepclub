@@ -44,7 +44,39 @@
       {% endwith %}
       <div id="join-section">
         <form action="{{ url_for('create_event') }}" method="post">
-          <!-- Other fieldsets remain the same -->
+          <fieldset>
+            <legend>Event Details</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="id">Event ID:</label>
+                <input type="text" id="id" name="id" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Event Name:</label>
+                <input type="text" id="name" name="name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="start_time">Start Time (ISO 8601):</label>
+                <input type="datetime-local" id="start_time" name="start_time" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="end_time">End Time (optional):</label>
+                <input type="datetime-local" id="end_time" name="end_time">
+              </div>
+            </div>
+          </fieldset>
           <fieldset>
             <legend>Place Details</legend>
             <div class="form-row">
@@ -173,7 +205,8 @@
 
     // Initialize the geocoder control and add it to the map
     var geocoder = L.Control.geocoder({
-      defaultMarkGeocode: false
+      defaultMarkGeocode: false,
+      position: 'topright'
     })
     .on('markgeocode', function(e) {
       var center = e.geocode.center;
