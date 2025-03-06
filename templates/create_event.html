@@ -6,7 +6,18 @@
   <title>Create New Event | Oviedo Jeep Club</title>
   <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="/static/style.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-sA+eKZYjvZ8D9+9K4l+Uiqv/gscVrFvN1f+qFckNfFg=" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Ensure the map fits well within your join container */
+    #map {
+      height: 300px;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -14,8 +25,9 @@
   </header>
 
   <nav class="menu">
-    <button id="menu-home" class="nav-btn" href="{{ url_for('index') }}">Home</button>
-    <button id="menu-logout" class="nav-btn" href="{{ url_for('logout') }}">Logout</button>
+    <!-- Using buttons with onclick to navigate -->
+    <button id="menu-home" class="nav-btn" onclick="window.location.href='{{ url_for('index') }}'">Home</button>
+    <button id="menu-logout" class="nav-btn" onclick="window.location.href='{{ url_for('logout') }}'">Logout</button>
   </nav>
 
   <main>
@@ -71,56 +83,35 @@
             <legend>Place Details</legend>
             <div class="form-row">
               <div class="form-group">
-                <label for="place_name">Place Name:</label>
-                <input type="text" id="place_name" name="place_name" required>
+                <label for="map">Select Location:</label>
+                <div id="map"></div>
               </div>
             </div>
+            <!-- Hidden or read-only fields populated via reverse geocoding -->
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
             <div class="form-row">
               <div class="form-group">
                 <label for="city">City:</label>
-                <input type="text" id="city" name="city" required>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="country">Country:</label>
-                <input type="text" id="country" name="country" required>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="latitude">Latitude:</label>
-                <input type="number" step="any" id="latitude" name="latitude" required>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="longitude">Longitude:</label>
-                <input type="number" step="any" id="longitude" name="longitude" required>
+                <input type="text" id="city" name="city" readonly>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="state">State:</label>
-                <input type="text" id="state" name="state" required>
+                <input type="text" id="state" name="state" readonly>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="street">Street (optional):</label>
-                <input type="text" id="street" name="street">
+                <label for="country">Country:</label>
+                <input type="text" id="country" name="country" readonly>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="zip">ZIP (optional):</label>
-                <input type="text" id="zip" name="zip">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="place_id">Place ID (optional):</label>
-                <input type="text" id="place_id" name="place_id">
+                <input type="text" id="zip" name="zip" readonly>
               </div>
             </div>
           </fieldset>
@@ -165,6 +156,56 @@
     <p>&copy; 2025 Oviedo Jeep Club</p>
   </footer>
 
+  <!-- Include Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-o9N1j7kJ19Bt0dLe2ZYGw2tdBL6faWe2P+H9FZnL3Tk=" crossorigin=""></script>
+  <script>
+    // Initialize the Leaflet map centered on Oviedo, FL
+    var map = L.map('map').setView([28.65595, -81.21425], 13);
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add a draggable marker
+    var marker = L.marker([28.65595, -81.21425], {draggable: true}).addTo(map);
+
+    // Function to perform reverse geocoding using Nominatim
+    function reverseGeocode(lat, lng) {
+      var url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          var address = data.address;
+          document.getElementById('latitude').value = lat;
+          document.getElementById('longitude').value = lng;
+          document.getElementById('city').value = address.city || address.town || address.village || '';
+          document.getElementById('state').value = address.state || '';
+          document.getElementById('country').value = address.country || '';
+          document.getElementById('zip').value = address.postcode || '';
+        })
+        .catch(error => {
+          console.error('Error in reverse geocoding:', error);
+        });
+    }
+
+    // Update form fields when marker is dragged
+    marker.on('dragend', function() {
+      var pos = marker.getLatLng();
+      reverseGeocode(pos.lat, pos.lng);
+    });
+
+    // Also update when the map is clicked
+    map.on('click', function(e) {
+      marker.setLatLng(e.latlng);
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Perform initial reverse geocoding for the default marker location
+    reverseGeocode(28.65595, -81.21425);
+  </script>
   <script src="{{ url_for('static', filename='scripts/profile.js') }}"></script>
   <script src="{{ url_for('static', filename='scripts/payment.js') }}"></script>
 </body>
