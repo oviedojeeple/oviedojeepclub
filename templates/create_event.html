@@ -43,7 +43,7 @@
         {% endif %}
       {% endwith %}
       <div id="join-section">
-        <form action="{{ url_for('create_event') }}" method="post">
+        <form action="{{ url_for('create_event') }}" method="post" enctype="multipart/form-data">
           <fieldset>
             <legend>Event Details</legend>
             <div class="form-row">
