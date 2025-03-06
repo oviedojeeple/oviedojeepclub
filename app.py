@@ -730,12 +730,16 @@ def get_facebook_events(page_id, access_token):
 
 def parse_date(date_str):
     print("##### DEBUG ##### In parse_date()")
-    from datetime import datetime
+    from datetime import datetime, timezone
     # List of potential formats
     formats = ['%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M']
     for fmt in formats:
         try:
-            return datetime.strptime(date_str, fmt)
+            dt = datetime.strptime(date_str, fmt)
+            # If the datetime is aware, convert it to UTC and make it naive
+            if dt.tzinfo is not None:
+                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return dt
         except ValueError:
             continue
     raise ValueError("No valid date format found for: " + date_str)
