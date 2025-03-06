@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create New Event | Oviedo Jeep Club</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <header>
-    <h1>Oviedo Jeep Club</h1>
-    <nav>
-      <ul>
-        <li><a href="{{ url_for('index') }}">Home</a></li>
-        <li><a href="{{ url_for('create_event') }}">Create Event</a></li>
-      </ul>
-    </nav>
+      <img src="/static/images/ojc.png" alt="Oviedo Jeep Club Logo" class="logo">
   </header>
+
+  <nav class="menu">
+    <button id="menu-profile" class="nav-btn">Profile</button>
+    <button id="menu-logout" class="nav-btn">Logout</button>
+  </nav>
 
   <main>
     <section class="content create-event">
