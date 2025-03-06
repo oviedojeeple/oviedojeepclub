@@ -193,11 +193,12 @@ def create_event():
     print("##### DEBUG ##### In create_event()")
     if request.method == "POST":
         # Generate a unique event id using the current time in milliseconds.
+        import time
         unique_event_id = "OJC" + str(int(time.time() * 1000))
         
         # Build the event data; ignore the 'id' field from the form.
         event = {
-            "id": unique_event_id,  # Use the auto-generated unique ID.
+            "id": unique_event_id,  # Auto-generated unique ID.
             "name": request.form.get("name", "").strip(),
             "description": request.form.get("description", "").strip(),
             "start_time": request.form.get("start_time", "").strip(),
@@ -222,16 +223,19 @@ def create_event():
                 "id": request.form.get("cover_id", "").strip() or None,
             },
         }
-
-        # Generate a blob name, for example using the event ID.
-        blob_name = f"event_{event['id']}.json"
-        success, message = upload_event_data(event, blob_name)
+        
+        # Load existing events from the blob
+        events_list = get_events_from_blob()
+        events_list.append(event)
+        
+        # Upload the updated events list to the same blob
+        success, message = upload_events_to_blob(events_list)
         if success:
             flash(message, "success")
         else:
             flash(message, "danger")
         return redirect(url_for("index"))
-
+    
     # GET request – render the dynamic event creation form
     return render_template("create_event.html")
     
@@ -627,6 +631,24 @@ def create_b2c_user(email, display_name, password, join_date, expiration_date):
         return created_user
     else:
         raise Exception("Error creating user: " + response.text)
+        
+def get_events_from_blob():
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    except Exception as e:
+        print("Error initializing BlobServiceClient:", e)
+        return []
+    
+    container_name = "events"
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob="events.json")
+    try:
+        blob_data = blob_client.download_blob().readall().decode('utf-8')
+        events = json.loads(blob_data)
+        return events
+    except Exception as e:
+        print("Error reading events blob:", e)
+        return []
 
 def upload_events_to_blob(events):
     print("##### DEBUG ##### In upload_events_to_blob()")
