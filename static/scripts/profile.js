@@ -135,21 +135,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Set up the "Collect" button listener to trigger the sync process
+    // Set up the "Collect" button listener
     if (collectBtn) {
-        collectBtn.addEventListener('click', () => {
-            document.getElementById('collect-events-btn').addEventListener('click', function() {
-              window.location.href = '/sync-public-events';
-            });
+        collectBtn.addEventListener('click', function() {
+            window.location.href = '/sync-public-events';
         });
     }
-
-    // Set up the "Create Event" button listener to trigger the sync process
+    
+    // Set up the "Create Event" button listener
     if (createEventBtn) {
-        createEventBtn.addEventListener('click', () => {
-            document.getElementById('create-event-btn').addEventListener('click', function() {
-              window.location.href = '/create_event';
-            });
+        createEventBtn.addEventListener('click', function() {
+            window.location.href = '/create_event';
         });
     }
 });
