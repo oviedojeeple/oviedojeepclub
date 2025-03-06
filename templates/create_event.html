@@ -90,6 +90,12 @@
             <input type="hidden" id="longitude" name="longitude">
             <div class="form-row">
               <div class="form-group">
+                <label for="place_name">Place Name:</label>
+                <input type="text" id="place_name" name="place_name" readonly>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
                 <label for="city">City:</label>
                 <input type="text" id="city" name="city" readonly>
               </div>
@@ -210,6 +216,9 @@
       var center = e.geocode.center;
       marker.setLatLng(center);
       map.setView(center, 13);
+      // Populate the "Place Name" field using the geocode result
+      var placeName = e.geocode.name || (e.geocode.properties && e.geocode.properties.name ? e.geocode.properties.name : '');
+      document.getElementById('place_name').value = placeName;
       reverseGeocode(center.lat, center.lng);
     })
     .addTo(map);
@@ -217,6 +226,11 @@
     // Perform initial reverse geocoding for the default marker location
     reverseGeocode(28.65595, -81.21425);
   </script>
+  <script src="https://sandbox.web.squarecdn.com/v1/square.js" defer></script>
+  <script src="/static/scripts/payment.js" defer></script>
+  <script src="/static/scripts/profile.js" defer></script>
+</body>
+</html>
   <script src="{{ url_for('static', filename='scripts/profile.js') }}"></script>
   <script src="{{ url_for('static', filename='scripts/payment.js') }}"></script>
 </body>
