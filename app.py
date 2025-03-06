@@ -192,12 +192,15 @@ def blob_events():
 def create_event():
     print("##### DEBUG ##### In create_event()")
     if request.method == "POST":
-        # Collect form fields. Use .get() to allow missing (optional) fields.
+        # Generate a unique event id using the current time in milliseconds.
+        unique_event_id = "OJC" + str(int(time.time() * 1000))
+        
+        # Build the event data; ignore the 'id' field from the form.
         event = {
-            "id": request.form.get("id", "").strip(),
+            "id": unique_event_id,  # Use the auto-generated unique ID.
             "name": request.form.get("name", "").strip(),
             "description": request.form.get("description", "").strip(),
-            "start_time": request.form.get("start_time", "").strip(),  # Should be in ISO 8601 format
+            "start_time": request.form.get("start_time", "").strip(),
             "end_time": request.form.get("end_time", "").strip() or None,
             "place": {
                 "name": request.form.get("place_name", "").strip(),
@@ -231,7 +234,7 @@ def create_event():
 
     # GET request – render the dynamic event creation form
     return render_template("create_event.html")
-
+    
 @app.route('/facebook/callback')
 @login_required
 def facebook_callback():
