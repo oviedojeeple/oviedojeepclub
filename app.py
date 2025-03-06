@@ -285,18 +285,31 @@ def facebook_callback():
     if "access_token" not in token_data:
         return f"Failed to get access token: {token_data.get('error')}", 400
 
-    # Save the access token in session
     session["fb_access_token"] = token_data["access_token"]
     session.modified = True
 
-    # Now fetch events using the token from session
     FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
-    events = get_facebook_events(FACEBOOK_PAGE_ID, session.get("fb_access_token"))
-    if events is None:
+    fb_events = get_facebook_events(FACEBOOK_PAGE_ID, session.get("fb_access_token"))
+    if fb_events is None:
         return jsonify({"error": "Unable to fetch events from Facebook"}), 500
-    sorted_events = sort_events_by_date_desc(events)
-    upload_events_to_blob(sorted_events)
+
+    # Sort the Facebook events if needed
+    sorted_facebook_events = sort_events_by_date_desc(fb_events)
+
+    # Load the current events from the blob
+    existing_events = get_events_from_blob()
+    # Filter to keep only custom events (those with IDs starting with "OJC")
+    custom_events = [ev for ev in existing_events if ev.get("id", "").startswith("OJC")]
+    # Combine custom events with the newly fetched Facebook events
+    combined_events = custom_events + sorted_facebook_events
+    # Optionally, sort the combined events list by start time descending
+    combined_events = sort_events_by_date_desc(combined_events)
     
+    # Upload the combined list back to the blob
+    success, message = upload_events_to_blob(combined_events)
+    if not success:
+        return jsonify({"error": message}), 500
+
     # Redirect back to index with section=events query parameter.
     return redirect(url_for("index", section="events"))
     
