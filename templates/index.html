@@ -67,8 +67,10 @@
           <section id="events-section" class="content-section">
               <h2>Oviedo Jeep Club Events</h2>
               {% if user and user.job_title == 'OJC Board Member' %}
-                <button id="collect-events-btn">Facebook Sync</button>
-                <button id="create-event-btn">Create an Event</button>
+                <div id="sub-menu" class="sub-menu">
+                  <button id="collect-events-btn" class="nav-btn sub-nav-btn">Facebook Sync</button>
+                  <button id="create-event-btn" class="nav-btn sub-nav-btn">Create an Event</button>
+                </div>
               {% endif %}
               <div id="events-section-content">
                   <p>Loading events from Facebook...</p>
