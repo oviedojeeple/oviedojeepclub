@@ -26,7 +26,7 @@
   </header>
 
   <nav class="menu">
-    <button id="menu-home" class="nav-btn" onclick="window.location.href='{{ url_for('index') }}'">Home</button>
+    <button id="menu-home" class="nav-btn" onclick="window.location.href='{{ url_for('index', section='events') }}'">Home</button>
     <button id="menu-logout" class="nav-btn" onclick="window.location.href='{{ url_for('logout') }}'">Logout</button>
   </nav>
 
