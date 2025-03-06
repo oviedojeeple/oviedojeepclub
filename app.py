@@ -266,7 +266,35 @@ def create_event():
         return redirect(url_for("index", section="events"))
     
     return render_template("create_event.html")
+
+@app.route('/delete_event/<event_id>', methods=['POST'])
+@login_required
+def delete_event(event_id):
+    print("##### DEBUG ##### In delete_event()")
+    # Only allow board members to delete events.
+    if current_user.job_title != 'OJC Board Member':
+        flash("You are not authorized to delete events.", "danger")
+        return redirect(url_for("index"))
     
+    # Load the existing events from the blob.
+    events_list = get_events_from_blob()  # Your helper function
+    
+    # Filter out the event with the given ID.
+    new_events_list = [event for event in events_list if event.get("id") != event_id]
+    
+    if len(new_events_list) == len(events_list):
+        flash("Event not found.", "warning")
+        return redirect(url_for("index", section="events"))
+    
+    # Upload the updated list back to the blob.
+    success, message = upload_events_to_blob(new_events_list)
+    if success:
+        flash("Event deleted successfully.", "success")
+    else:
+        flash("Error deleting event: " + message, "danger")
+    
+    return redirect(url_for("index", section="events"))
+
 @app.route('/facebook/callback')
 @login_required
 def facebook_callback():
