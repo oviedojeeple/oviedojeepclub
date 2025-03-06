@@ -262,7 +262,8 @@ def create_event():
             flash(message, "success")
         else:
             flash(message, "danger")
-        return redirect(url_for("index"))
+        # Redirect back to index with section=events query parameter.
+        return redirect(url_for("index", section="events"))
     
     return render_template("create_event.html")
     
