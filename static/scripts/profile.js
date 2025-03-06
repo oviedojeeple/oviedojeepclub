@@ -51,6 +51,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (event.cover && event.cover.source && event.cover.source.trim() !== '') {
                             coverHtml = `<img src="${event.cover.source}" alt="Event Cover" class="event-cover">`;
                         }
+                        
+                        // Only show a delete button if the event is custom (ID starts with OJC)
+                        let deleteButtonHtml = '';
+                        if (event.id.startsWith("OJC")) {
+                            deleteButtonHtml = `<button class="delete-event-btn" data-event-id="${event.id}">Delete</button>`;
+                        }
 
                         // Only build the Facebook link if the event ID does NOT start with "OJC"
                         let facebookLinkHtml = '';
@@ -65,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <p>${event.description}</p>
                             <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
                             ${ (!event.id.startsWith("OJC") ? `<p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>` : '') }
+                            ${deleteButtonHtml}
                         `;
                         eventsContent.appendChild(eventDiv);
                     });
@@ -148,4 +155,26 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = '/create_event';
         });
     }
+    
+    // Attach a click listener for delete buttons
+    document.querySelectorAll('.delete-event-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const eventId = this.getAttribute('data-event-id');
+            if (confirm("Are you sure you want to delete this event?")) {
+                // Send a POST request to the delete endpoint.
+                fetch(`/delete_event/${eventId}`, { method: 'POST' })
+                  .then(response => {
+                      if (response.ok) {
+                          loadBlobEvents(); // Reload events
+                      } else {
+                          showFlashMessage("Error deleting event.", "danger");
+                      }
+                  })
+                  .catch(error => {
+                      console.error("Error deleting event:", error);
+                      showFlashMessage("Error deleting event.", "danger");
+                  });
+            }
+        });
+    });
 });
