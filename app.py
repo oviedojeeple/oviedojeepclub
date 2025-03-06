@@ -790,7 +790,7 @@ def sort_events_by_date_desc(events):
     return sorted(
         events,
         key=lambda e: parse_date(e['start_time']),
-        reverse=True
+        # disabling revers - reverse=True
     )
 
 def send_membership_renewal_email(recipient_email, recipient_name):
