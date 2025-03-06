@@ -728,13 +728,25 @@ def get_facebook_events(page_id, access_token):
         print("Error fetching Facebook events:", e)
         return None
 
+def parse_date(date_str):
+    print("##### DEBUG ##### In parse_date()")
+    from datetime import datetime
+    # List of potential formats
+    formats = ['%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M']
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    raise ValueError("No valid date format found for: " + date_str)
+
 def sort_events_by_date_desc(events):
     print("##### DEBUG ##### In sort_events_by_date_desc()")
-    from datetime import datetime
     # Sort events so that future (newer) events come first (descending order)
     return sorted(
         events,
-        key=lambda e: datetime.strptime(e['start_time'], '%Y-%m-%dT%H:%M:%S%z'),
+        key=lambda e: parse_date(e['start_time']),
+        reverse=True
     )
 
 def send_membership_renewal_email(recipient_email, recipient_name):
