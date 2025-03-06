@@ -652,23 +652,27 @@ def get_events_from_blob():
 
 def upload_events_to_blob(events):
     print("##### DEBUG ##### In upload_events_to_blob()")
-    # Initialize the BlobServiceClient using your connection string.
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     if not connection_string:
         print("##### DEBUG ##### In upload_events_to_blob() Azure Storage connection string is not set!")
-        return
+        return False, "Azure Storage connection string is not set"
     try:
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     except Exception as e:
         print("Error initializing BlobServiceClient:", e)
-        return
+        return False, str(e)
 
     container_name = "events"  # Ensure this container exists in your Azure storage account.
     blob_client = blob_service_client.get_blob_client(container=container_name, blob="events.json")
-    events_json = json.dumps(events)
-    blob_client.upload_blob(events_json, overwrite=True)
-    print("##### DEBUG ##### In upload_events_to_blob() Events successfully uploaded to Azure Blob Storage.")
-
+    try:
+        events_json = json.dumps(events)
+        blob_client.upload_blob(events_json, overwrite=True)
+        print("##### DEBUG ##### In upload_events_to_blob() Events successfully uploaded to Azure Blob Storage.")
+        return True, "Events successfully uploaded to Azure Blob Storage."
+    except Exception as e:
+        print("Error uploading blob:", e)
+        return False, str(e)
+        
 def user_still_exists(email):
     print(f'##### DEBUG ##### In user_still_exists with {email}')
     # Checks if a user with the expected userPrincipalName exists.
