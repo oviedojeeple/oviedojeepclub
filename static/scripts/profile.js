@@ -46,20 +46,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         eventDiv.classList.add('event');
                         const startDate = new Date(event.start_time).toLocaleString();
 
-                       // Include cover image if available
+                        // Include cover image if available
                         let coverHtml = '';
-                        if (event.cover) {
-                            // Check if cover.source is defined and not empty
-                            let coverUrl = (event.cover.source && event.cover.source.trim() !== '') 
-                                             ? event.cover.source 
-                                             : null;
-                            // If you had an alternative field, you could check here too, e.g.:
-                            // if (!coverUrl && event.cover_url && event.cover_url.trim() !== '') {
-                            //     coverUrl = event.cover_url;
-                            // }
-                            if (coverUrl) {
-                                coverHtml = `<img src="${coverUrl}" alt="Event Cover" class="event-cover">`;
-                            }
+                        if (event.cover && event.cover.source && event.cover.source.trim() !== '') {
+                            coverHtml = `<img src="${event.cover.source}" alt="Event Cover" class="event-cover">`;
                         }
 
                         // Only build the Facebook link if the event ID does NOT start with "OJC"
@@ -74,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <p><strong>Start:</strong> ${startDate}</p>
                             <p>${event.description}</p>
                             <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
-                            ${facebookLinkHtml}
+                            ${ (!event.id.startsWith("OJC") ? `<p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>` : '') }
                         `;
                         eventsContent.appendChild(eventDiv);
                     });
