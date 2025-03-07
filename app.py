@@ -1052,7 +1052,7 @@ def store_invitation(token, data, expire_seconds=3600):
         # Optionally, add a CreatedAt field for expiration logic
         "CreatedAt": datetime.utcnow().isoformat()
     }
-   table_client.upsert_entity(entity=entity, mode=UpdateMode.REPLACE)
+    table_client.upsert_entity(entity=entity, mode=UpdateMode.REPLACE)
 
 class Main(Resource):
     def post(self):
