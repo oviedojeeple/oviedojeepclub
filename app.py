@@ -56,6 +56,12 @@ login_manager.init_app(app)
 
 table_service_client = TableServiceClient.from_connection_string(conn_str=AZURE_STORAGE_CONNECTION_STRING)
 table_name = "Invitations"
+try:
+    table_client = table_service_client.create_table_if_not_exists(table_name=table_name)
+    print("Table client created or retrieved for table:", table_name)
+except Exception as e:
+    print("Error creating/getting table:", e)
+    table_client = table_service_client.get_table_client(table_name=table_name)
 
 client = Client(
     access_token=SQUARE_ACCESS_TOKEN,
@@ -1038,13 +1044,13 @@ def send_membership_renewal_email(recipient_email, recipient_name):
 
 def store_invitation(token, data, expire_seconds=3600):
     print("##### DEBUG ##### In store_invitation()")
-    # Data is a dictionary with invitation details.
+    # Construct the entity. Using token as both PartitionKey and RowKey.
     entity = {
         "PartitionKey": token,
         "RowKey": token,
         **data,
-        # Optionally, store a timestamp for expiration.
-        "CreatedAt": json.dumps(data.get("created_at", ""))  # You can store a timestamp string if needed.
+        # Optionally, add a CreatedAt field for expiration logic
+        "CreatedAt": datetime.utcnow().isoformat()
     }
     table_client.upsert_entity(entity=entity, mode="MERGE")  # upsert ensures it is saved
 
