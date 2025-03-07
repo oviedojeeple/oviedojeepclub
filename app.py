@@ -1037,7 +1037,7 @@ def send_membership_renewal_email(recipient_email, recipient_name):
         print("Error sending email:", e)
 
 def store_invitation(token, data, expire_seconds=3600):
-     print("##### DEBUG ##### In store_invitation()")
+    print("##### DEBUG ##### In store_invitation()")
     # Data is a dictionary with invitation details.
     entity = {
         "PartitionKey": token,
