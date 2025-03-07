@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accept Family Invitation | Oviedo Jeep Club</title>
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+      <img src="/static/images/ojc.png" alt="Oviedo Jeep Club Logo" class="logo">
+  </header>
+  <h1>Accept Invitation</h1>
+  <p>Invited Email: {{ family_email }}</p>
+  <p>Invited Name: {{ family_name }}</p>
+  <form method="POST">
+    <input type="hidden" name="token" value="{{ token }}">
+    <label for="password">Choose a Password:</label>
+    <input type="password" name="password" required>
+    <button type="submit">Create Account</button>
+  </form>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+  <footer>
+    <p>&copy; 2025 Oviedo Jeep Club</p>
+  </footer>
+</body>
+</html>
