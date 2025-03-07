@@ -51,6 +51,9 @@ print(f'##### DEBUG ##### TOKEN_URL:: {AZURE_COMM_CONNECTION_STRING_SENDER}')
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+# In-memory store for family invitations
+invitations = {}
+
 client = Client(
     access_token=SQUARE_ACCESS_TOKEN,
     environment='sandbox'  # Change to 'production' when ready
@@ -113,6 +116,43 @@ def index():
     print("##### DEBUG ##### In index()")
     application_id = os.getenv('SQUARE_APPLICATION_ID')
     return render_template('index.html', application_id=application_id, user=current_user)
+
+@app.route("/accept_invitation", methods=["GET", "POST"])
+def accept_invitation():
+    print("##### DEBUG ##### In accept_invitation()")
+    token = request.args.get("token") or request.form.get("token")
+    if not token or token not in invitations:
+        flash("Invalid or expired invitation token.", "danger")
+        return redirect(url_for("index"))
+    
+    invitation = invitations[token]
+    
+    if request.method == "POST":
+        # Collect additional required info (e.g., password) from the family member.
+        password = request.form.get("password")
+        if not password:
+            flash("Password is required.", "danger")
+            return render_template("accept_invitation.html", token=token, family_email=invitation["family_email"], family_name=invitation["family_name"])
+        
+        email = invitation["family_email"]
+        display_name = invitation["family_name"]
+        membership_number = invitation["membership_number"]
+        join_date = invitation["member_joined_date"]
+        expiration_date = invitation["member_expiration_date"]
+        
+        try:
+            # Create the new B2C user with the shared membership details.
+            created_user = create_b2c_user(email, display_name, password, membership_number, join_date, expiration_date)
+            flash("Family member account created successfully. Please sign in.", "success")
+            # Remove the invitation after successful use.
+            del invitations[token]
+            return redirect(url_for("login"))
+        except Exception as e:
+            flash(f"Error creating family member account: {e}", "danger")
+            return render_template("accept_invitation.html", token=token, family_email=invitation["family_email"], family_name=invitation["family_name"])
+    
+    # GET request: render the acceptance form, pre-populating with the invitation details.
+    return render_template("accept_invitation.html", token=token, family_email=invitation["family_email"], family_name=invitation["family_name"])
 
 @app.route('/auth/callback')
 def auth_callback():
@@ -392,6 +432,48 @@ def fb_events():
 
     sorted_events = sort_events_by_date_desc(events)
     return jsonify(sorted_events)
+
+@app.route('/invite_family', methods=['GET', 'POST'])
+@login_required
+def invite_family():
+    print("##### DEBUG ##### In invite_family()")
+    if request.method == 'POST':
+        family_email = request.form.get('family_email')
+        family_name = request.form.get('family_name')
+        if not family_email or not family_name:
+            flash("Please provide both the family member's name and email.", "danger")
+            return redirect(url_for('invite_family'))
+        
+        # Generate a unique invitation token
+        import uuid
+        token = uuid.uuid4().hex
+
+        # Retrieve membership details from the primary member's session/current_user.
+        # (Ensure you have these details stored; here we assume they are in current_user.)
+        membership_number = current_user.membership_number
+        # For demonstration, we assume that you also store the join date and expiration date.
+        # If these aren’t stored in the session, consider updating auth_callback accordingly.
+        member_joined_date = session["user_data"].get("member_joined_date", int(datetime.now().timestamp()))
+        member_expiration_date = session["user_data"].get("member_expiration_date")
+
+        # Store invitation details in the in-memory dictionary
+        invitations[token] = {
+            "family_email": family_email,
+            "family_name": family_name,
+            "membership_number": membership_number,
+            "member_joined_date": member_joined_date,
+            "member_expiration_date": member_expiration_date
+        }
+        
+        # Build the invitation link (using _external=True so the URL is absolute)
+        invitation_link = url_for("accept_invitation", token=token, _external=True)
+        
+        # Send the invitation email
+        send_family_invitation_email(family_email, family_name, invitation_link)
+        
+        flash("Invitation sent successfully!", "success")
+        return redirect(url_for("index"))
+    return render_template("invite_family.html")
 
 @app.route('/items', methods=['GET'])
 def get_items():
@@ -838,6 +920,27 @@ def sort_events_by_date_desc(events):
         key=lambda e: parse_date(e['start_time']),
         # disabling revers - reverse=True
     )
+
+def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
+    print("##### DEBUG ##### In send_family_invitation_email()")
+    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+    try:
+        response = email_client.send(
+            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
+            content={
+                "subject": "You're Invited to Join the Oviedo Jeep Club Family Membership",
+                "plainText": f"Hello {recipient_name},\n\nYou have been invited to join the Oviedo Jeep Club family membership. Please click the link below to accept your invitation:\n{invitation_link}",
+                "html": f"<html><body><h1>Invitation to Join Oviedo Jeep Club</h1><p>Hello {recipient_name},</p><p>You have been invited to join the Oviedo Jeep Club family membership. Please click the link below to accept your invitation:</p><a href='{invitation_link}'>Accept Invitation</a></body></html>"
+            },
+            recipients={
+                "to": [
+                    {"address": recipient_email, "displayName": recipient_name}
+                ]
+            }
+        )
+        print("##### DEBUG ##### In send_family_invitation_email() Invitation email sent! Response:", response)
+    except Exception as e:
+        print("Error sending family invitation email:", e)
 
 def send_membership_renewal_email(recipient_email, recipient_name):
     print("##### DEBUG ##### In send_membership_renewal_email()")
