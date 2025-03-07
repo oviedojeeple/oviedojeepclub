@@ -58,11 +58,12 @@ client = Client(
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
-    def __init__(self, user_id, name, email, job_title=None, member_expiration_date=None, member_expiration_iso=None):
+    def __init__(self, user_id, name, email, membership_number, job_title=None, member_expiration_date=None, member_expiration_iso=None):
         print(f'##### DEBUG ##### In User class with {self} and {user_id} and {name} and {email}')
         self.id = user_id
         self.name = name
         self.email = email
+        self.membership_number = membership_number
         self.job_title = job_title
         self.member_expiration_date = member_expiration_date
         self.member_expiration_iso = member_expiration_iso
@@ -76,6 +77,7 @@ def load_user(user_id):
             user_id=user_data["user_id"],
             name=user_data["name"],
             email=user_data["email"],
+            membership_number=user_data.get("membership_number"),
             job_title=user_data.get("job_title"),
             member_expiration_date=user_data.get("member_expiration_date"),
             member_expiration_iso=user_data.get("member_expiration_iso")
@@ -148,12 +150,15 @@ def auth_callback():
     
         # Safely get the job title (or default)
         job_title = user_info.get("jobTitle", "OJC Member")
+
+        membership_number = user_info.get("extension__MembershipNumber")
     
         # Create the user_data dictionary with all info
         user_data = {
             "user_id": user_info["oid"],
             "name": user_info["name"],
             "email": user_info["emails"][0],
+            "membership_number": membership_number,
             "job_title": job_title,
             "member_expiration_date": member_expiration,
             "member_expiration_iso": member_expiration_iso
@@ -163,7 +168,7 @@ def auth_callback():
         session["user_data"] = user_data
     
         user_data_for_login = {k: v for k, v in user_data.items() 
-                               if k in ["user_id", "name", "email", "job_title", "member_expiration_date", "member_expiration_iso"]}
+                               if k in ["user_id", "name", "email", "job_title", "membership_number", "member_expiration_date", "member_expiration_iso"]}
     
         login_user(User(**user_data_for_login), remember=True)
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
@@ -447,11 +452,11 @@ def pay():
             session["receipt_url"] = receipt_url  # Store for later display
             
             flash('Payment Successful! Creating your account...', 'success')
-            join_date = int(datetime.now().timestamp())
-            expiration_date = compute_expiration_date()  # Your helper function
+            # Generate membership details: membership number, join date, expiration date
+            membership_number, join_date, expiration_date = create_membership_details()
             
             try:
-                created_user = create_b2c_user(email, display_name, password, join_date, expiration_date)
+                created_user = create_b2c_user(email, display_name, password, membership_number, join_date, expiration_date)
                 print("##### DEBUG ##### User created: ", created_user)
                 flash('Account created successfully. Please sign in.', 'success')
             except Exception as e:
@@ -642,8 +647,8 @@ def compute_expiration_date():
         expiration = datetime(current_year + 1, 3, 31)
     return int(expiration.timestamp())
 
-def create_b2c_user(email, display_name, password, join_date, expiration_date):
-    print("##### DEBUG ##### In create_b2c_user() Attempting to create B2C user with:", email, display_name, join_date, expiration_date)
+def create_b2c_user(email, display_name, password, membership_number, join_date, expiration_date):
+    print("##### DEBUG ##### In create_b2c_user() Attempting to create B2C user with:", email, display_name, membership_number, join_date, expiration_date)
     tenant_id = os.getenv("AZURE_TENANT_ID")
     client_id = os.getenv("AZURE_CLIENT_ID")
     client_secret = os.getenv("AZURE_CLIENT_SECRET")
@@ -690,6 +695,7 @@ def create_b2c_user(email, display_name, password, join_date, expiration_date):
         # Optionally update custom extension attributes:
         update_payload = {
             "otherMails": [email],
+            "extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber": membership_number,
             "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberJoinedDate": join_date,
             "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate": expiration_date
         }
@@ -701,6 +707,17 @@ def create_b2c_user(email, display_name, password, join_date, expiration_date):
     else:
         raise Exception("Error creating user: " + response.text)
         
+def create_membership_details():
+    import time
+    from datetime import datetime
+    # Generate a unique 13-digit timestamp and prefix it with "OJC"
+    membership_number = "OJC" + str(int(time.time() * 1000))
+    # Use the current timestamp for join date (in seconds)
+    join_date = int(datetime.now().timestamp())
+    # Compute the expiration date using your helper function
+    expiration_date = compute_expiration_date()
+    return membership_number, join_date, expiration_date
+
 def get_events_from_blob():
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     try:
