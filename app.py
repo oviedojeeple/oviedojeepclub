@@ -946,7 +946,7 @@ def sort_events_by_date_desc(events):
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
-email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
         message = {
             "sender": AZURE_COMM_CONNECTION_STRING_SENDER,
