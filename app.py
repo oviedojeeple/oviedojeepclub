@@ -949,7 +949,7 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
         message = {
-            "sender": AZURE_COMM_CONNECTION_STRING_SENDER,
+            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
             "content": {
                 "subject": "You're Invited to Join the Oviedo Jeep Club Family Membership",
                 "plainText": (
