@@ -406,20 +406,24 @@ def family_members():
     headers = {"Authorization": f"Bearer {graph_token}"}
     # Construct a filter query: find users with the same membership number,
     # excluding the primary member. Adjust the attribute name to your custom attribute.
-    filter_query = (
+    # Build filter using the full property name
+    filter_clause = (
         f"(extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}') and "
         f"(userPrincipalName ne '{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com')"
     )
-    print("##### DEBUG ##### In family_members() filter_query:", filter_query)
-    url = f"https://graph.microsoft.com/v1.0/users?$filter={quote(filter_query)}"
-    response = requests.get(url, headers=headers)
+    params = {
+        "$select": "id,displayName,userPrincipalName,extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber",
+        "$filter": filter_clause
+    }
+    url = "https://graph.microsoft.com/v1.0/users"
+    response = requests.get(url, headers=headers, params=params)
     if response.status_code == 200:
         data = response.json().get("value", [])
         return jsonify(data)
     else:
-        print("##### DEBUG ##### In family_members() filter_query error response:", response)
+        print("Graph API error:", response.text)
         return jsonify({"error": "Failed to fetch family members"}), response.status_code
-
+        
 @app.route('/login')
 def login():
     print("##### DEBUG ##### In login()")
