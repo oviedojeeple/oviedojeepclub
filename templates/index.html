@@ -65,6 +65,20 @@
                   </tr>
               </table>
           </section>
+          <section id="family-section">
+            <h2>Family Member</h2>
+            <!-- This container will display family member info if one exists -->
+            <div id="family-member-info" style="display:none;">
+              <p id="family-member-name"></p>
+              <p id="family-member-email"></p>
+            </div>
+            <!-- If no family member exists, show the invitation form -->
+            <div id="family-invite-form" style="display:none;">
+              <input type="text" id="family_name" placeholder="Family Member Name">
+              <input type="email" id="family_email" placeholder="Family Member Email">
+              <button id="send-family-invite-btn">Send Invite</button>
+            </div>
+          </section>
           <section id="events-section" class="content-section">
               <h2>Oviedo Jeep Club Events</h2>
               {% if user and user.job_title == 'OJC Board Member' %}

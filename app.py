@@ -462,8 +462,8 @@ def fb_events():
 def invite_family():
     print("##### DEBUG ##### In invite_family()")
     if request.method == 'POST':
-    family_email = request.form.get('family_email')
-    family_name = request.form.get('family_name')
+        family_email = request.form.get('family_email')
+        family_name = request.form.get('family_name')
     if not family_email or not family_name:
         return jsonify({"error": "Missing family name or email"}), 400
 
