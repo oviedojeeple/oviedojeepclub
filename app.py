@@ -119,6 +119,10 @@ def index():
 
 @app.route("/accept_invitation", methods=["GET", "POST"])
 def accept_invitation():
+    # Ignore HEAD requests
+    if request.method == "HEAD":
+        return ""
+        
     print("##### DEBUG ##### In accept_invitation()")
     token = request.args.get("token") or request.form.get("token")
     if not token or token not in invitations:
