@@ -15,12 +15,35 @@
   <h1>Accept Invitation</h1>
   <p>Invited Email: {{ family_email }}</p>
   <p>Invited Name: {{ family_name }}</p>
-  <form method="POST">
-    <input type="hidden" name="token" value="{{ token }}">
-    <label for="password">Choose a Password:</label>
-    <input type="password" name="password" required>
-    <button type="submit">Create Account</button>
-  </form>
+<form method="POST">
+  <input type="hidden" name="token" value="{{ token }}">
+  
+  <label for="password">Choose a Password:</label>
+  <input type="password" name="password" id="password" required minlength="8" maxlength="64"
+         pattern="^(?=.*[A-Za-z])(?=.*\d).{8,64}$"
+         title="Password must be 8-64 characters and include at least one letter and one number">
+
+  <label for="confirmPassword">Confirm Password:</label>
+  <input type="password" name="confirmPassword" id="confirmPassword" required minlength="8" maxlength="64"
+         pattern="^(?=.*[A-Za-z])(?=.*\d).{8,64}$"
+         title="Please re-enter your password. Must be 8-64 characters and include at least one letter and one number">
+  
+  <button type="submit">Create Account</button>
+  <script>
+    // Get references to the password fields
+    const passwordField = document.getElementById("password");
+    const confirmPasswordField = document.getElementById("confirmPassword");
+  
+    // Validate that both fields match whenever the user types in the confirm field
+    confirmPasswordField.addEventListener("input", function () {
+        if (passwordField.value !== confirmPasswordField.value) {
+            confirmPasswordField.setCustomValidity("Passwords do not match");
+        } else {
+            confirmPasswordField.setCustomValidity("");
+        }
+    });
+  </script>
+</form>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <ul>
