@@ -4,6 +4,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
+from azure.data.tables import TableServiceClient
 from azure.communication.email import EmailClient
 from square.client import Client
 from urllib.parse import quote
@@ -40,19 +41,21 @@ print(f'##### DEBUG ##### LOGIN_URL:: {LOGIN_URL}')
 TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
 print(f'##### DEBUG ##### TOKEN_URL:: {TOKEN_URL}')
 SQUARE_ACCESS_TOKEN = os.getenv("SQUARE_ACCESS_TOKEN")
-print(f'##### DEBUG ##### TOKEN_URL:: {SQUARE_ACCESS_TOKEN}')
+print(f'##### DEBUG ##### SQUARE_ACCESS_TOKEN:: {SQUARE_ACCESS_TOKEN}')
 SQUARE_APPLICATION_ID = os.getenv("SQUARE_APPLICATION_ID")
-print(f'##### DEBUG ##### TOKEN_URL:: {SQUARE_APPLICATION_ID}')
+print(f'##### DEBUG ##### SQUARE_APPLICATION_ID:: {SQUARE_APPLICATION_ID}')
+AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+print(f'##### DEBUG ##### AZURE_STORAGE_CONNECTION_STRING:: {AZURE_STORAGE_CONNECTION_STRING}')
 AZURE_COMM_CONNECTION_STRING = os.getenv("AZURE_COMM_CONNECTION_STRING")
-print(f'##### DEBUG ##### TOKEN_URL:: {AZURE_COMM_CONNECTION_STRING}')
+print(f'##### DEBUG ##### AZURE_COMM_CONNECTION_STRING:: {AZURE_COMM_CONNECTION_STRING}')
 AZURE_COMM_CONNECTION_STRING_SENDER = os.getenv("AZURE_COMM_CONNECTION_STRING_SENDER")
-print(f'##### DEBUG ##### TOKEN_URL:: {AZURE_COMM_CONNECTION_STRING_SENDER}')
+print(f'##### DEBUG ##### AZURE_COMM_CONNECTION_STRING_SENDER:: {AZURE_COMM_CONNECTION_STRING_SENDER}')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# In-memory store for family invitations
-invitations = {}
+table_service_client = TableServiceClient.from_connection_string(conn_str=AZURE_STORAGE_CONNECTION_STRING)
+table_name = "Invitations"
 
 client = Client(
     access_token=SQUARE_ACCESS_TOKEN,
@@ -120,27 +123,26 @@ def index():
 @app.route("/accept_invitation", methods=["GET", "POST"])
 def accept_invitation():
     print("##### DEBUG ##### In accept_invitation()")
-    print("##### DEBUG ##### In accept_invitation(): invitations", invitations)
     # Ignore HEAD requests
     if request.method == "HEAD":
         return ""
         
     token = request.args.get("token") or request.form.get("token")
     print("##### DEBUG ##### In accept_invitation(): Received token:", token)
-    print("##### DEBUG ##### In accept_invitation(): Current invitation tokens:", list(invitations.keys()))
+    invitation = get_invitation(token)
+    print("##### DEBUG ##### In accept_invitation(): Retrieved invitation:", invitation)
     
-    if not token or token not in invitations:
+    if not token or not invitation:
         flash("Invalid or expired invitation token.", "danger")
         return redirect(url_for("index"))
     
-    invitation = invitations[token]
-    
     if request.method == "POST":
-        # Collect additional required info (e.g., password) from the family member.
         password = request.form.get("password")
         if not password:
             flash("Password is required.", "danger")
-            return render_template("accept_invitation.html", token=token, family_email=invitation["family_email"], family_name=invitation["family_name"])
+            return render_template("accept_invitation.html", token=token,
+                                   family_email=invitation["family_email"],
+                                   family_name=invitation["family_name"])
         
         email = invitation["family_email"]
         display_name = invitation["family_name"]
@@ -149,18 +151,19 @@ def accept_invitation():
         expiration_date = invitation["member_expiration_date"]
         
         try:
-            # Create the new B2C user with the shared membership details.
             created_user = create_b2c_user(email, display_name, password, membership_number, join_date, expiration_date)
             flash("Family member account created successfully. Please sign in.", "success")
-            # Remove the invitation after successful use.
-            del invitations[token]
+            delete_invitation(token)
             return redirect(url_for("login"))
         except Exception as e:
             flash(f"Error creating family member account: {e}", "danger")
-            return render_template("accept_invitation.html", token=token, family_email=invitation["family_email"], family_name=invitation["family_name"])
+            return render_template("accept_invitation.html", token=token,
+                                   family_email=invitation["family_email"],
+                                   family_name=invitation["family_name"])
     
-    # GET request: render the acceptance form, pre-populating with the invitation details.
-    return render_template("accept_invitation.html", token=token, family_email=invitation["family_email"], family_name=invitation["family_name"])
+    return render_template("accept_invitation.html", token=token,
+                           family_email=invitation["family_email"],
+                           family_name=invitation["family_name"])
 
 @app.route('/auth/callback')
 def auth_callback():
@@ -228,7 +231,7 @@ def auth_callback():
 @login_required
 def blob_events():
     print("##### DEBUG ##### In blob_events()")
-    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    connection_string = AZURE_STORAGE_CONNECTION_STRING
     try:
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         container_name = "events"  # Make sure this container exists.
@@ -256,7 +259,7 @@ def create_event():
         cover_image_url = None
         if cover_image_file:
             try:
-                connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+                connection_string = AZURE_STORAGE_CONNECTION_STRING
                 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
                 container_name = "event-images"  # Ensure this container exists or create it
                 # Check if container exists; if not, create it.
@@ -493,7 +496,7 @@ def invite_family():
     member_expiration_date = session["user_data"].get("member_expiration_date")
 
     # Store invitation details in an in-memory dictionary (for demo purposes)
-    invitations[token] = {
+    invitation_data = {
         "family_email": family_email,
         "family_name": family_name,
         "membership_number": membership_number,
@@ -501,7 +504,10 @@ def invite_family():
         "member_expiration_date": member_expiration_date
     }
 
-    print("##### DEBUG ##### In invite_family(): invitations", invitations)
+    print("##### DEBUG ##### In invite_family(): invitation_data", invitation_data)
+
+    store_invitation(token, invitation_data)
+    
     invitation_link = url_for("accept_invitation", token=token, _external=True)
     print("##### DEBUG ##### In invite_family(): invitation_link", invitation_link)
     send_family_invitation_email(family_email, family_name, invitation_link)
@@ -719,6 +725,7 @@ def _build_auth_code_flow():
     return app.initiate_auth_code_flow([], redirect_uri=REDIRECT_URI)
 
 def _acquire_token_by_auth_code_flow(flow, args):
+    print("##### DEBUG ##### In _acquire_token_by_auth_code_flow")
     app = msal.ConfidentialClientApplication(CLIENT_ID, CLIENT_SECRET, authority=AUTHORITY)
     result = app.acquire_token_by_auth_code_flow(flow, args)
     if "id_token" in result:
@@ -823,6 +830,7 @@ def create_b2c_user(email, display_name, password, membership_number, join_date,
         raise Exception("Error creating user: " + response.text)
         
 def create_membership_details():
+    print("##### DEBUG ##### In create_membership_details()")
     import time
     from datetime import datetime
     # Generate a unique 13-digit timestamp and prefix it with "OJC"
@@ -833,8 +841,16 @@ def create_membership_details():
     expiration_date = compute_expiration_date()
     return membership_number, join_date, expiration_date
 
+def delete_invitation(token):
+    print("##### DEBUG ##### In delete_invitation()")
+    try:
+        table_client.delete_entity(partition_key=token, row_key=token)
+    except Exception as e:
+        print("Error deleting invitation:", e)
+
 def get_events_from_blob():
-    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    print("##### DEBUG ##### In get_events_from_blob()")
+    connection_string = AZURE_STORAGE_CONNECTION_STRING
     try:
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     except Exception as e:
@@ -853,7 +869,7 @@ def get_events_from_blob():
 
 def upload_events_to_blob(events):
     print("##### DEBUG ##### In upload_events_to_blob()")
-    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    connection_string = AZURE_STORAGE_CONNECTION_STRING
     if not connection_string:
         print("##### DEBUG ##### In upload_events_to_blob() Azure Storage connection string is not set!")
         return False, "Azure Storage connection string is not set"
@@ -929,6 +945,16 @@ def get_facebook_events(page_id, access_token):
         print("Error fetching Facebook events:", e)
         return None
 
+def get_invitation(token):
+    print("##### DEBUG ##### In get_invitation()")
+    try:
+        entity = table_client.get_entity(partition_key=token, row_key=token)
+        # Convert entity to a dictionary if needed
+        return dict(entity)
+    except Exception as e:
+        print("Error retrieving invitation:", e)
+        return None
+
 def parse_date(date_str):
     print("##### DEBUG ##### In parse_date()")
     from datetime import datetime, timezone
@@ -956,7 +982,6 @@ def sort_events_by_date_desc(events):
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
-    print("##### DEBUG ##### In send_family_invitation_email(): invitations", invitations)
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
         message = {
@@ -1010,6 +1035,18 @@ def send_membership_renewal_email(recipient_email, recipient_name):
         print("Email sent! Response:", response)
     except Exception as e:
         print("Error sending email:", e)
+
+def store_invitation(token, data, expire_seconds=3600):
+     print("##### DEBUG ##### In store_invitation()")
+    # Data is a dictionary with invitation details.
+    entity = {
+        "PartitionKey": token,
+        "RowKey": token,
+        **data,
+        # Optionally, store a timestamp for expiration.
+        "CreatedAt": json.dumps(data.get("created_at", ""))  # You can store a timestamp string if needed.
+    }
+    table_client.upsert_entity(entity=entity, mode="MERGE")  # upsert ensures it is saved
 
 class Main(Resource):
     def post(self):
