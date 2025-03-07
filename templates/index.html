@@ -53,6 +53,7 @@
               <table class="profile-details">
                 <tr><td>Name</td><td>{{ user.name }}</td></tr>
                 <tr><td>Email</td><td>{{ user.email }}</td></tr>
+                <tr><td>Member</td><td>{{ user.membership_number }}</td></tr>
                 {% if user and user.job_title == 'OJC Board Member' %}
                   <tr><td>OJC Role</td><td>{{ user.job_title }}</td></tr>
                 {% else %}
