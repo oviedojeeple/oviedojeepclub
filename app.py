@@ -9,7 +9,7 @@ from square.client import Client
 from urllib.parse import quote
 from event_uploader import upload_event_data
 import msal
-import os, time, requests, json
+import os, time, requests, json, uuid
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -119,12 +119,16 @@ def index():
 
 @app.route("/accept_invitation", methods=["GET", "POST"])
 def accept_invitation():
+    print("##### DEBUG ##### In accept_invitation()")
+    print("##### DEBUG ##### In accept_invitation(): invitations", invitations)
     # Ignore HEAD requests
     if request.method == "HEAD":
         return ""
         
-    print("##### DEBUG ##### In accept_invitation()")
     token = request.args.get("token") or request.form.get("token")
+    print("##### DEBUG ##### In accept_invitation(): Received token:", token)
+    print("##### DEBUG ##### In accept_invitation(): Current invitation tokens:", list(invitations.keys()))
+    
     if not token or token not in invitations:
         flash("Invalid or expired invitation token.", "danger")
         return redirect(url_for("index"))
@@ -480,8 +484,8 @@ def invite_family():
     if not family_email or not family_name:
         return jsonify({"error": "Missing family name or email"}), 400
 
-    import uuid
     token = uuid.uuid4().hex
+    print("##### DEBUG ##### In invite_family(): token", token)
 
     # Use the current user's membership details.
     membership_number = current_user.membership_number
@@ -497,7 +501,9 @@ def invite_family():
         "member_expiration_date": member_expiration_date
     }
 
+    print("##### DEBUG ##### In invite_family(): invitations", invitations)
     invitation_link = url_for("accept_invitation", token=token, _external=True)
+    print("##### DEBUG ##### In invite_family(): invitation_link", invitation_link)
     send_family_invitation_email(family_email, family_name, invitation_link)
     
     return jsonify({"message": "Invitation sent successfully!"})
@@ -950,6 +956,7 @@ def sort_events_by_date_desc(events):
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
+    print("##### DEBUG ##### In send_family_invitation_email(): invitations", invitations)
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
         message = {
