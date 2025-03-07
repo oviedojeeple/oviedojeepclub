@@ -409,10 +409,12 @@ def family_members():
     # Build filter using the full property name
     # Only filter on the membership number because the 'ne' operator is not supported.
     filter_clause = f"(extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}')"
+    print("##### DEBUG ##### In family_members() filter_clause", filter_clause)
     params = {
         "$select": "id,displayName,userPrincipalName,extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber",
         "$filter": filter_clause
     }
+    print("##### DEBUG ##### In family_members() params", params)
     url = "https://graph.microsoft.com/v1.0/users"
     response = requests.get(url, headers=headers, params=params)
     if response.status_code == 200:
@@ -946,7 +948,7 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
     print("##### DEBUG ##### In send_family_invitation_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
-        response = email_client.send(
+        response = email_client.begin_send(
             sender=AZURE_COMM_CONNECTION_STRING_SENDER,
             content={
                 "subject": "You're Invited to Join the Oviedo Jeep Club Family Membership",
@@ -959,8 +961,10 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
                 ]
             }
         )
+        flash("Family member invite sent successfully.", "success")
         print("##### DEBUG ##### In send_family_invitation_email() Invitation email sent! Response:", response)
     except Exception as e:
+        flash("Family member invite failed to be sent.", "danger")
         print("Error sending family invitation email:", e)
 
 def send_membership_renewal_email(recipient_email, recipient_name):
