@@ -393,7 +393,31 @@ def facebook_callback():
 
     # Redirect back to index with section=events query parameter.
     return redirect(url_for("index", section="events"))
-    
+
+@app.route('/family-members', methods=['GET'])
+@login_required
+def family_members():
+    print("##### DEBUG ##### In family_members()")
+    membership_number = current_user.membership_number
+    graph_token = _acquire_graph_api_token()
+    if not graph_token:
+        return jsonify({"error": "Unable to acquire Graph API token"}), 500
+
+    headers = {"Authorization": f"Bearer {graph_token}"}
+    # Construct a filter query: find users with the same membership number,
+    # excluding the primary member. Adjust the attribute name to your custom attribute.
+    filter_query = (
+        f"extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}' "
+        f"and userPrincipalName ne '{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com'"
+    )
+    url = f"https://graph.microsoft.com/v1.0/users?$filter={quote(filter_query)}"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json().get("value", [])
+        return jsonify(data)
+    else:
+        return jsonify({"error": "Failed to fetch family members"}), response.status_code
+
 @app.route('/login')
 def login():
     print("##### DEBUG ##### In login()")
@@ -438,42 +462,32 @@ def fb_events():
 def invite_family():
     print("##### DEBUG ##### In invite_family()")
     if request.method == 'POST':
-        family_email = request.form.get('family_email')
-        family_name = request.form.get('family_name')
-        if not family_email or not family_name:
-            flash("Please provide both the family member's name and email.", "danger")
-            return redirect(url_for('invite_family'))
-        
-        # Generate a unique invitation token
-        import uuid
-        token = uuid.uuid4().hex
+    family_email = request.form.get('family_email')
+    family_name = request.form.get('family_name')
+    if not family_email or not family_name:
+        return jsonify({"error": "Missing family name or email"}), 400
 
-        # Retrieve membership details from the primary member's session/current_user.
-        # (Ensure you have these details stored; here we assume they are in current_user.)
-        membership_number = current_user.membership_number
-        # For demonstration, we assume that you also store the join date and expiration date.
-        # If these aren’t stored in the session, consider updating auth_callback accordingly.
-        member_joined_date = session["user_data"].get("member_joined_date", int(datetime.now().timestamp()))
-        member_expiration_date = session["user_data"].get("member_expiration_date")
+    import uuid
+    token = uuid.uuid4().hex
 
-        # Store invitation details in the in-memory dictionary
-        invitations[token] = {
-            "family_email": family_email,
-            "family_name": family_name,
-            "membership_number": membership_number,
-            "member_joined_date": member_joined_date,
-            "member_expiration_date": member_expiration_date
-        }
-        
-        # Build the invitation link (using _external=True so the URL is absolute)
-        invitation_link = url_for("accept_invitation", token=token, _external=True)
-        
-        # Send the invitation email
-        send_family_invitation_email(family_email, family_name, invitation_link)
-        
-        flash("Invitation sent successfully!", "success")
-        return redirect(url_for("index"))
-    return render_template("invite_family.html")
+    # Use the current user's membership details.
+    membership_number = current_user.membership_number
+    member_joined_date = session["user_data"].get("member_joined_date", int(datetime.now().timestamp()))
+    member_expiration_date = session["user_data"].get("member_expiration_date")
+
+    # Store invitation details in an in-memory dictionary (for demo purposes)
+    invitations[token] = {
+        "family_email": family_email,
+        "family_name": family_name,
+        "membership_number": membership_number,
+        "member_joined_date": member_joined_date,
+        "member_expiration_date": member_expiration_date
+    }
+
+    invitation_link = url_for("accept_invitation", token=token, _external=True)
+    send_family_invitation_email(family_email, family_name, invitation_link)
+    
+    return jsonify({"message": "Invitation sent successfully!"})
 
 @app.route('/items', methods=['GET'])
 def get_items():
