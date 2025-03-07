@@ -946,23 +946,35 @@ def sort_events_by_date_desc(events):
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
-    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
-        response = email_client.begin_send(
-            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
-            content={
+        message = {
+            "sender": AZURE_COMM_CONNECTION_STRING_SENDER,
+            "content": {
                 "subject": "You're Invited to Join the Oviedo Jeep Club Family Membership",
-                "plainText": f"Hello {recipient_name},\n\nYou have been invited to join the Oviedo Jeep Club family membership. Please click the link below to accept your invitation:\n{invitation_link}",
-                "html": f"<html><body><h1>Invitation to Join Oviedo Jeep Club</h1><p>Hello {recipient_name},</p><p>You have been invited to join the Oviedo Jeep Club family membership. Please click the link below to accept your invitation:</p><a href='{invitation_link}'>Accept Invitation</a></body></html>"
+                "plainText": (
+                    f"Hello {recipient_name},\n\n"
+                    f"You have been invited to join the Oviedo Jeep Club family membership. "
+                    f"Please click the link below to accept your invitation:\n{invitation_link}"
+                ),
+                "html": (
+                    f"<html><body><h1>Invitation to Join Oviedo Jeep Club</h1>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>You have been invited to join the Oviedo Jeep Club family membership. "
+                    f"Please click the link below to accept your invitation:</p>"
+                    f"<a href='{invitation_link}'>Accept Invitation</a></body></html>"
+                )
             },
-            recipients={
+            "recipients": {
                 "to": [
                     {"address": recipient_email, "displayName": recipient_name}
                 ]
             }
-        )
+        }
+        poller = email_client.begin_send(message)
+        result = poller.result()  # Wait for the operation to complete.
         flash("Family member invite sent successfully.", "success")
-        print("##### DEBUG ##### In send_family_invitation_email() Invitation email sent! Response:", response)
+        print("##### DEBUG ##### In send_family_invitation_email() Invitation email sent! Result:", result)
     except Exception as e:
         flash("Family member invite failed to be sent.", "danger")
         print("Error sending family invitation email:", e)
