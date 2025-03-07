@@ -407,10 +407,8 @@ def family_members():
     # Construct a filter query: find users with the same membership number,
     # excluding the primary member. Adjust the attribute name to your custom attribute.
     # Build filter using the full property name
-    filter_clause = (
-        f"(extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}') and "
-        f"(userPrincipalName ne '{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com')"
-    )
+    # Only filter on the membership number because the 'ne' operator is not supported.
+    filter_clause = f"(extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}')"
     params = {
         "$select": "id,displayName,userPrincipalName,extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber",
         "$filter": filter_clause
@@ -419,6 +417,9 @@ def family_members():
     response = requests.get(url, headers=headers, params=params)
     if response.status_code == 200:
         data = response.json().get("value", [])
+        # Manually filter out the current user's record.
+        current_user_upn = f"{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com"
+        data = [user for user in data if user.get("userPrincipalName") != current_user_upn]
         return jsonify(data)
     else:
         print("Graph API error:", response.text)
