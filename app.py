@@ -151,7 +151,7 @@ def auth_callback():
         # Safely get the job title (or default)
         job_title = user_info.get("jobTitle", "OJC Member")
 
-        membership_number = user_info.get("extension__MembershipNumber")
+        membership_number = user_info.get("extension_MembershipNumber")
     
         # Create the user_data dictionary with all info
         user_data = {
