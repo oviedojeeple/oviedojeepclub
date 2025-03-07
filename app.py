@@ -407,8 +407,8 @@ def family_members():
     # Construct a filter query: find users with the same membership number,
     # excluding the primary member. Adjust the attribute name to your custom attribute.
     filter_query = (
-        f"extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}' "
-        f"and userPrincipalName ne '{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com'"
+        f"extension_MembershipNumber eq '{membership_number}' and "
+        f"userPrincipalName ne '{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com'"
     )
     url = f"https://graph.microsoft.com/v1.0/users?$filter={quote(filter_query)}"
     response = requests.get(url, headers=headers)
