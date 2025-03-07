@@ -178,4 +178,77 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = '/create_event';
         });
     }
+    
+  // Family Member functionality: check for an existing family member and handle invite submission
+  // Family Member Section Elements
+  const familyMemberInfo = document.getElementById('family-member-info');
+  const familyMemberName = document.getElementById('family-member-name');
+  const familyMemberEmail = document.getElementById('family-member-email');
+  const familyInviteForm = document.getElementById('family-invite-form');
+  const sendFamilyInviteBtn = document.getElementById('send-family-invite-btn');
+
+  // Check if the user is authenticated before trying to load family info
+  if (isAuthenticated) {
+    // Query your back end for family members associated with the current membership number
+    fetch('/family-members')
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          console.error("Error fetching family member:", data.error);
+          return;
+        }
+        if (data.length > 0) {
+          // If a family member exists, display their details (assuming one for now)
+          familyMemberName.innerText = "Name: " + data[0].displayName;
+          // Use the email from the Graph API response (adjust if needed)
+          familyMemberEmail.innerText = "Email: " + (data[0].mail || data[0].userPrincipalName);
+          familyMemberInfo.style.display = "block";
+          familyInviteForm.style.display = "none";
+        } else {
+          // No family member exists: show the invite form
+          familyInviteForm.style.display = "block";
+          familyMemberInfo.style.display = "none";
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+      });
+
+    // Handle invite submission when the "Send Invite" button is clicked
+    if (sendFamilyInviteBtn) {
+      sendFamilyInviteBtn.addEventListener("click", function() {
+        const familyNameValue = document.getElementById("family_name").value;
+        const familyEmailValue = document.getElementById("family_email").value;
+        if (!familyNameValue || !familyEmailValue) {
+          alert("Please fill out both the family member's name and email.");
+          return;
+        }
+        // Prepare form data for the POST request
+        const formData = new URLSearchParams();
+        formData.append("family_name", familyNameValue);
+        formData.append("family_email", familyEmailValue);
+
+        fetch('/invite_family', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert("Error: " + data.error);
+          } else {
+            alert("Invitation sent successfully!");
+            // Optionally hide the invite form after sending
+            familyInviteForm.style.display = "none";
+          }
+        })
+        .catch(err => {
+          console.error("Error sending invitation:", err);
+        });
+      });
+    }
+  }
 });
