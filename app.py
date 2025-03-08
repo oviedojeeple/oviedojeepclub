@@ -449,6 +449,7 @@ def family_members():
         # Manually filter out the current user's record.
         current_user_upn = f"{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com"
         data = [user for user in data if user.get("userPrincipalName") != current_user_upn]
+        print("##### DEBUG ##### In family_members() family member user data: ", data)
         return jsonify(data)
     else:
         print("Graph API error:", response.text)
