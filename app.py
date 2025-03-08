@@ -70,7 +70,7 @@ client = Client(
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
-    def __init__(self, user_id, name, email, membership_number, job_title=None, member_expiration_date=None, member_expiration_iso=None, member_expiration_raw, member_joined_raw):
+    def __init__(self, user_id, name, email, membership_number, member_expiration_raw, member_joined_raw, job_title=None, member_expiration_date=None, member_expiration_iso=None):
         print(f'##### DEBUG ##### In User class with {self} and {user_id} and {name} and {email}')
         self.id = user_id
         self.name = name
