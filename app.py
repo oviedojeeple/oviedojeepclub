@@ -70,7 +70,7 @@ client = Client(
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
-    def __init__(self, user_id, name, email, membership_number, job_title=None, member_expiration_date=None, member_expiration_iso=None):
+    def __init__(self, user_id, name, email, membership_number, job_title=None, member_expiration_date=None, member_expiration_iso=None, member_expiration_raw, member_joined_raw):
         print(f'##### DEBUG ##### In User class with {self} and {user_id} and {name} and {email}')
         self.id = user_id
         self.name = name
@@ -79,6 +79,8 @@ class User(UserMixin):
         self.job_title = job_title
         self.member_expiration_date = member_expiration_date
         self.member_expiration_iso = member_expiration_iso
+        self.member_expiration_raw = member_expiration_raw
+        self.member_joined_raw = member_joined_raw
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -92,7 +94,9 @@ def load_user(user_id):
             membership_number=user_data.get("membership_number"),
             job_title=user_data.get("job_title"),
             member_expiration_date=user_data.get("member_expiration_date"),
-            member_expiration_iso=user_data.get("member_expiration_iso")
+            member_expiration_iso=user_data.get("member_expiration_iso"),
+            member_expiration_raw=user_data.get("member_expiration_raw"),
+            member_joined_raw=user_data.get("member_joined_raw")
         )
     return None
     
@@ -186,6 +190,7 @@ def auth_callback():
 
         # Retrieve the raw custom attribute value
         member_expiration_raw = user_info.get("extension_MemberExpirationDate")
+        member_joined_raw = user_info.get("extension_MemberJoinedDate")
     
         # Default values in case of conversion issues
         member_expiration = "Not Available"
@@ -218,14 +223,19 @@ def auth_callback():
             "membership_number": membership_number,
             "job_title": job_title,
             "member_expiration_date": member_expiration,
-            "member_expiration_iso": member_expiration_iso
+            "member_expiration_iso": member_expiration_iso,
+            "member_expiration_raw": member_expiration_raw,
+            "member_joined_raw": member_joined_raw
         }
     
         # Store the full user_data in session (for template use)
         session["user_data"] = user_data
     
         user_data_for_login = {k: v for k, v in user_data.items() 
-                               if k in ["user_id", "name", "email", "job_title", "membership_number", "member_expiration_date", "member_expiration_iso"]}
+                               if k in [
+                                   "user_id", "name", "email", "job_title", "membership_number",
+                                   "member_expiration_date", "member_expiration_iso", 
+                                   "member_expiration_raw", "member_joined_raw"]}
     
         login_user(User(**user_data_for_login), remember=True)
         print("##### DEBUG ##### In auth_callback() Session after login: ", session)
@@ -498,10 +508,10 @@ def invite_family():
 
     # Use the current user's membership details.
     membership_number = current_user.membership_number
-    member_joined_date = session["user_data"].get("member_joined_date", int(datetime.now().timestamp()))
-    member_expiration_date = session["user_data"].get("member_expiration_date")
+    member_joined_date = current_user.member_joined_raw
+    member_expiration_date = current_user.member_expiration_raw
 
-    # Store invitation details in an in-memory dictionary (for demo purposes)
+    # Store invitation details in database
     invitation_data = {
         "family_email": family_email,
         "family_name": family_name,
