@@ -4,7 +4,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
-from azure.data.tables import TableServiceClient
+from azure.data.tables import TableServiceClient, UpdateMode
 from azure.communication.email import EmailClient
 from square.client import Client
 from urllib.parse import quote
