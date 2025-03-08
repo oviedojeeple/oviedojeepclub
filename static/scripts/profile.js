@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Section elements
     const profileSection = document.getElementById('profile-section');
+    const familySection = document.getElementById('family-section');
     const eventsSection = document.getElementById('events-section');
     const eventsContent = document.getElementById('events-section-content');
     const collectBtn = document.getElementById('collect-events-btn');
@@ -16,11 +17,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to hide all sections and show one
     function showSection(section) {
         if (profileSection) profileSection.style.display = 'none';
+        if (familySection) familySection.style.display = 'none';
         if (eventsSection) eventsSection.style.display = 'none';
         if (renewSection) renewSection.style.display = 'none';
         
         if (section === 'profile' && profileSection) {
-            profileSection.style.display = 'block';
+            if (profileSection) profileSection.style.display = 'block';
+            if (familySection) familySection.style.display = 'block';
         } else if (section === 'events' && eventsSection) {
             eventsSection.style.display = 'block';
         } else if (section === 'renew' && renewSection) {
