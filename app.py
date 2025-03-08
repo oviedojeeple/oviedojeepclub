@@ -438,7 +438,7 @@ def family_members():
     filter_clause = f"(extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}')"
     print("##### DEBUG ##### In family_members() filter_clause", filter_clause)
     params = {
-        "$select": "id,displayName,otherEmails,userPrincipalName,extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber",
+        "$select": "id,displayName,mailNickName,userPrincipalName,extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber",
         "$filter": filter_clause
     }
     print("##### DEBUG ##### In family_members() params", params)
