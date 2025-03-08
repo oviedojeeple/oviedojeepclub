@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
           // If a family member exists, display their details (assuming one for now)
           familyMemberName.innerText = "Name: " + data[0].displayName;
           // Use the email from the Graph API response (adjust if needed)
-          familyMemberEmail.innerText = "Email: " + (data[0].mail || data[0].userPrincipalName);
+          familyMemberEmail.innerText = "Email: " + data[0].mailNickname.replace("_at_", "@");
           familyMemberInfo.style.display = "block";
           familyInviteForm.style.display = "none";
         } else {
