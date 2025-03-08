@@ -677,24 +677,46 @@ def renew_membership():
             "Content-Type": "application/json"
         }
         
-        update_response = requests.patch(azure_ad_b2c_api_url, json=update_payload, headers=graph_headers)
-        if update_response.status_code == 204:
-            print("##### DEBUG ##### In renew_membership() session details: ", session)
-            if new_expiration_date:
-                try:
-                    timestamp_int = int(new_expiration_date)
-                    if timestamp_int > 1e10:  # Convert from milliseconds if necessary
-                        timestamp_int = timestamp_int / 1000
-                    expiration_date_obj = datetime.fromtimestamp(timestamp_int).date()
-                    member_expiration = expiration_date_obj.strftime('%B %d, %Y')  # e.g., "March 31, 2025"
-                    member_expiration_iso = expiration_date_obj.isoformat()         # e.g., "2025-03-31"
-                    print("##### DEBUG ##### In renew_membership(): Member expiration dates: ", member_expiration, member_expiration_iso)
-                except Exception as e:
-                    print("##### DEBUG ##### In renew_membership() Converting timestamp failed:", e)
-                    member_expiration = "Invalid Date"
-            session['user_data']['member_expiration_date'] = member_expiration  # Update session
-            session['user_data']['member_expiration_iso'] = member_expiration_iso  # Update session
-            flash('Payment Successful! Your renewal has been updated!', 'success')
+        # Query all users sharing the same Membership Number
+        membership_number = current_user.membership_number
+        filter_clause = f"(extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}')"
+        params = {
+            "$select": "id,displayName,extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber",
+            "$filter": filter_clause
+        }
+        url = "https://graph.microsoft.com/v1.0/users"
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            users = response.json().get("value", [])
+            print("##### DEBUG ##### In renew_membership() Found users for renewal:", users)
+            # Loop through each user and update the MemberExpirationDate
+            for user in users:
+                user_id = user["id"]
+                patch_url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+                patch_payload = {
+                    "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate": new_expiration_date
+                }
+                patch_response = requests.patch(patch_url, headers=headers, json=patch_payload)
+                if patch_response.status_code not in [200, 204]:
+                    print(f"Error updating user {user_id}: {patch_response.text}")
+                    # Optionally, log the error for further handling.
+            # Update the session for the current user.
+            try:
+                # For display purposes, convert the timestamp to a human-readable date.
+                ts = int(new_expiration_date)
+                if ts > 1e10:  # if in milliseconds
+                    ts = ts / 1000
+                expiration_date_obj = datetime.fromtimestamp(ts).date()
+                member_expiration = expiration_date_obj.strftime('%B %d, %Y')
+                member_expiration_iso = expiration_date_obj.isoformat()
+            except Exception as e:
+                print("Error converting new expiration date:", e)
+                member_expiration = "Invalid Date"
+                member_expiration_iso = "Invalid Date"
+            session["user_data"]["member_expiration_date"] = member_expiration
+            session["user_data"]["member_expiration_iso"] = member_expiration_iso
+
+            flash('Payment Successful! Your renewal has been updated for all members.', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
         else:
             flash('Payment succeeded but failed to update membership. Share error with Administrator.', 'danger')
@@ -702,7 +724,7 @@ def renew_membership():
     else:
         flash('Payment failed. Share error with Administrator.', 'danger')
         return jsonify(success=False, message="Payment failed"), 400
-
+        
 @app.route('/sync-public-events')
 def sync_public_events():
     print("##### DEBUG ##### In sync_public_events()")
