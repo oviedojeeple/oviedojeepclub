@@ -1,13 +1,13 @@
+# ===== Imports =====
 import os
 import json
 from jsonschema import validate, ValidationError, SchemaError
 from azure.storage.blob import BlobServiceClient
 
-# Azure Storage configuration: Make sure the environment variable is set.
+# ===== Global Constants and Configuration =====
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 CONTAINER_NAME = "events"
 
-# JSON Schema Definition for events
 EVENT_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Oviedo Jeep Club Event",
@@ -57,6 +57,7 @@ EVENT_SCHEMA = {
     }
 }
 
+# ===== Helper Functions =====
 def validate_json(data):
     """
     Validates the given JSON data against the EVENT_SCHEMA.
@@ -69,6 +70,7 @@ def validate_json(data):
         return False, f"JSON Validation Error: {e.message}"
     except SchemaError as e:
         return False, f"Schema Error: {e.message}"
+
 
 def upload_event_data(event_data, blob_name):
     """
@@ -91,4 +93,3 @@ def upload_event_data(event_data, blob_name):
         return True, "Event data uploaded successfully!"
     except Exception as e:
         return False, f"Azure Blob Upload Error: {e}"
-        
