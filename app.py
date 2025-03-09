@@ -69,11 +69,6 @@ client = Client(
     environment='sandbox'  # Change to 'production' when ready
 )
 
-# Initialize and start the scheduler in your app initialization section
-scheduler = APScheduler()
-scheduler.add_job(func=check_membership_expiration, trigger="interval", days=1, id="expiration_check")
-scheduler.start()
-
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
     def __init__(self, user_id, name, email, membership_number, member_expiration_raw, member_joined_raw, job_title=None, member_expiration_date=None, member_expiration_iso=None):
@@ -815,7 +810,12 @@ def check_membership_expiration():
             days_left = (expiration_date - today).days
             if days_left in [90, 60, 30, 15, 1]:
                 send_disablement_reminder_email(user['email'], user['name'], days_left)
-                
+
+# Initialize and start the scheduler in your app initialization section
+scheduler = APScheduler()
+scheduler.add_job(func=check_membership_expiration, trigger="interval", days=1, id="expiration_check")
+scheduler.start()
+
 def compute_expiration_date():
     print("##### DEBUG ##### In compute_expiration_date()")
     now = datetime.now()  # Correct: using datetime.now(), not datetime.datetime.now()
