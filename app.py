@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from flask_apscheduler import APScheduler
 from datetime import datetime
 from azure.storage.blob import BlobServiceClient
 from azure.data.tables import TableServiceClient, UpdateMode
@@ -67,6 +68,11 @@ client = Client(
     access_token=SQUARE_ACCESS_TOKEN,
     environment='sandbox'  # Change to 'production' when ready
 )
+
+# Initialize and start the scheduler in your app initialization section
+scheduler = APScheduler()
+scheduler.add_job(func=check_membership_expiration, trigger="interval", days=1, id="expiration_check")
+scheduler.start()
 
 class User(UserMixin):
     print(f'##### DEBUG ##### In User class with {UserMixin}')
@@ -596,6 +602,7 @@ def pay():
             try:
                 created_user = create_b2c_user(email, display_name, password, membership_number, join_date, expiration_date)
                 print("##### DEBUG ##### User created: ", created_user)
+                send_new_membership_email(email, display_name, receipt_url)
                 flash('Account created successfully. Please sign in.', 'success')
             except Exception as e:
                 flash(f'Error creating account: {e}', 'danger')
@@ -647,7 +654,7 @@ def renew_membership():
         return jsonify(success=False, message="User not authenticated"), 401
 
     # Process Square Payment
-    amount = 3000  # Membership Fee (e.g., $50.00)
+    amount = 3000  # Membership Fee (e.g., $30.00)
     body = {
         "source_id": nonce,
         "amount_money": {
@@ -719,6 +726,7 @@ def renew_membership():
             flash('Payment Successful! Your renewal has been updated for all members.', 'success')
             return jsonify(success=True, message="Membership renewed successfully")
         else:
+            send_membership_renewal_email(current_user.email, current_user.name)
             flash('Payment succeeded but failed to update membership. Share error with Administrator.', 'danger')
             return jsonify(success=False, message="Payment succeeded but failed to update membership"), 500
     else:
@@ -795,6 +803,19 @@ def _acquire_graph_api_token():
         print("Error acquiring Graph token:", result.get("error_description"))
         return None
         
+def check_membership_expiration():
+    print("##### DEBUG ##### In check_membership_expiration()")
+    today = datetime.today().date()
+    # Replace get_all_users() with your actual function to retrieve user data
+    users = get_all_users()  
+    for user in users:
+        expiration_str = user.get("member_expiration_iso")
+        if expiration_str:
+            expiration_date = datetime.strptime(expiration_str, "%Y-%m-%d").date()
+            days_left = (expiration_date - today).days
+            if days_left in [90, 60, 30, 15, 1]:
+                send_disablement_reminder_email(user['email'], user['name'], days_left)
+                
 def compute_expiration_date():
     print("##### DEBUG ##### In compute_expiration_date()")
     now = datetime.now()  # Correct: using datetime.now(), not datetime.datetime.now()
@@ -886,6 +907,38 @@ def delete_invitation(token):
         table_client.delete_entity(partition_key=token, row_key=token)
     except Exception as e:
         print("Error deleting invitation:", e)
+
+def get_all_users():
+    print("##### DEBUG ##### In get_all_users()")
+    """
+    Retrieves all users from Microsoft Graph API with selected fields.
+    Returns:
+        A list of dictionaries, each representing a user.
+    """
+    token = _acquire_graph_api_token()
+    if not token:
+        print("Error: Could not acquire Graph API token.")
+        return []
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    # Select the fields that are relevant for membership checks:
+    # id, displayName, mail, and the custom membership expiration attribute.
+    select_fields = "id,displayName,mail,extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate"
+    url = f"https://graph.microsoft.com/v1.0/users?$select={select_fields}"
+    
+    users = []
+    while url:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            users.extend(data.get("value", []))
+            # Check if there is a nextLink for pagination
+            url = data.get("@odata.nextLink")
+        else:
+            print(f"Error fetching users: {response.status_code} {response.text}")
+            break
+
+    return users
 
 def get_events_from_blob():
     print("##### DEBUG ##### In get_events_from_blob()")
@@ -1019,6 +1072,37 @@ def sort_events_by_date_desc(events):
         # disabling revers - reverse=True
     )
 
+def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
+    print("##### DEBUG ##### In send_disablement_reminder_email()")
+    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+    try:
+        response = email_client.send(
+            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
+            content={
+                "subject": "Membership Expiration Reminder",
+                "plainText": (
+                    f"Hello {recipient_name},\n\n"
+                    f"Your membership is set to expire in {days_left} day(s). "
+                    "Please renew your membership to continue enjoying Oviedo Jeep Club benefits."
+                ),
+                "html": (
+                    f"<html><body><h1>Membership Expiration Reminder</h1>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your membership is set to expire in <strong>{days_left}</strong> day(s). "
+                    "Please renew your membership to continue enjoying Oviedo Jeep Club benefits.</p>"
+                    f"</body></html>"
+                )
+            },
+            recipients={
+                "to": [
+                    {"address": recipient_email, "displayName": recipient_name}
+                ]
+            }
+        )
+        print("Disablement reminder email sent!", response)
+    except Exception as e:
+        print("Error sending disablement reminder email:", e)
+
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
@@ -1059,11 +1143,15 @@ def send_membership_renewal_email(recipient_email, recipient_name):
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
         response = email_client.send(
-            sender=AZURE_COMM_CONNECTION_STRING_SENDER,  # Replace with your verified sender email
+            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
             content={
                 "subject": "Membership Renewal Confirmation",
                 "plainText": "Your membership has been renewed successfully!",
-                "html": "<html><body><h1>Membership Renewal Confirmation</h1><p>Your membership has been renewed successfully!</p></body></html>"
+                "html": (
+                    "<html><body><h1>Membership Renewal Confirmation</h1>"
+                    "<p>Your membership has been renewed successfully!</p>"
+                    "</body></html>"
+                )
             },
             recipients={
                 "to": [
@@ -1071,9 +1159,40 @@ def send_membership_renewal_email(recipient_email, recipient_name):
                 ]
             }
         )
-        print("Email sent! Response:", response)
+        print("Membership renewal email sent!", response)
     except Exception as e:
-        print("Error sending email:", e)
+        print("Error sending renewal email:", e)
+
+def send_new_membership_email(recipient_email, recipient_name, receipt_url):
+    print("##### DEBUG ##### In send_new_membership_email()")
+    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+    try:
+        response = email_client.send(
+            sender=AZURE_COMM_CONNECTION_STRING_SENDER,  # your verified sender
+            content={
+                "subject": "Welcome to Oviedo Jeep Club!",
+                "plainText": (
+                    f"Hello {recipient_name},\n\n"
+                    f"Your account has been created successfully.\n"
+                    f"View your receipt here: {receipt_url}"
+                ),
+                "html": (
+                    f"<html><body><h1>Welcome to Oviedo Jeep Club!</h1>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your account has been created successfully.</p>"
+                    f"<p>View your receipt <a href='{receipt_url}'>here</a>.</p>"
+                    f"</body></html>"
+                )
+            },
+            recipients={
+                "to": [
+                    {"address": recipient_email, "displayName": recipient_name}
+                ]
+            }
+        )
+        print("New membership email sent!", response)
+    except Exception as e:
+        print("Error sending new membership email:", e)
 
 def store_invitation(token, data, expire_seconds=3600):
     print("##### DEBUG ##### In store_invitation()")
