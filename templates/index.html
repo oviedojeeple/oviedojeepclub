@@ -17,9 +17,7 @@
     {% if user.is_authenticated %}
       <button id="menu-profile" class="nav-btn">Profile</button>
       <button id="menu-events" class="nav-btn">Events</button>
-      <button id="menu-merchandise" class="nav-btn">
-        <img src="/static/images/GoInkit.png" alt="Merchandise" class="external-logo">
-      </button>
+      <button id="menu-merchandise" class="nav-btn">Store</button>
           {% if user and user.member_expiration_iso %}
             {% set expiration_date = user.member_expiration_iso | to_date %}
             {% set today = now().date() %}   
