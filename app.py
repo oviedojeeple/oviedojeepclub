@@ -380,9 +380,9 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     print("##### DEBUG ##### In send_disablement_reminder_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
-        response = email_client.send(
-            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
-            content={
+        message = {
+            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+            "content": {
                 "subject": "Membership Expiration Reminder",
                 "plainText": (
                     f"Hello {recipient_name},\n\n"
@@ -397,13 +397,15 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
                     f"</body></html>"
                 )
             },
-            recipients={
+            "recipients": {
                 "to": [
                     {"address": recipient_email, "displayName": recipient_name}
                 ]
             }
-        )
-        print("Disablement reminder email sent!", response)
+        }
+        poller = email_client.begin_send(message)
+        result = poller.result()
+        print("##### DEBUG ##### In send_disablement_reminder_email() Email sent! Result:", result)
     except Exception as e:
         print("Error sending disablement reminder email:", e)
 
@@ -446,9 +448,9 @@ def send_membership_renewal_email(recipient_email, recipient_name):
     print("##### DEBUG ##### In send_membership_renewal_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
-        response = email_client.send(
-            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
-            content={
+        message = {
+            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+            "content": {
                 "subject": "Membership Renewal Confirmation",
                 "plainText": "Your membership has been renewed successfully!",
                 "html": (
@@ -457,23 +459,25 @@ def send_membership_renewal_email(recipient_email, recipient_name):
                     "</body></html>"
                 )
             },
-            recipients={
+            "recipients": {
                 "to": [
                     {"address": recipient_email, "displayName": recipient_name}
                 ]
             }
-        )
-        print("Membership renewal email sent!", response)
+        }
+        poller = email_client.begin_send(message)
+        result = poller.result()
+        print("##### DEBUG ##### In send_membership_renewal_email() Email sent! Result:", result)
     except Exception as e:
-        print("Error sending renewal email:", e)
+        print("Error sending membership renewal email:", e)
 
 def send_new_membership_email(recipient_email, recipient_name, receipt_url):
     print("##### DEBUG ##### In send_new_membership_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
-        response = email_client.send(
-            sender=AZURE_COMM_CONNECTION_STRING_SENDER,
-            content={
+        message = {
+            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+            "content": {
                 "subject": "Welcome to Oviedo Jeep Club!",
                 "plainText": (
                     f"Hello {recipient_name},\n\n"
@@ -488,13 +492,15 @@ def send_new_membership_email(recipient_email, recipient_name, receipt_url):
                     f"</body></html>"
                 )
             },
-            recipients={
+            "recipients": {
                 "to": [
                     {"address": recipient_email, "displayName": recipient_name}
                 ]
             }
-        )
-        print("New membership email sent!", response)
+        }
+        poller = email_client.begin_send(message)
+        result = poller.result()
+        print("##### DEBUG ##### In send_new_membership_email() Email sent! Result:", result)
     except Exception as e:
         print("Error sending new membership email:", e)
 
