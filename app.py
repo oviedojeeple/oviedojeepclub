@@ -524,7 +524,12 @@ def check_membership_expiration():
             if days_left in [90, 60, 30, 15, 1]:
                 email = user['mailNickname'].replace('_at_', '@')
                 print("##### DEBUG ##### In check_membership_expiration() about to send email to: ", email)
-                send_disablement_reminder_email(email, user['name'], days_left)
+                try:
+                    send_disablement_reminder_email(email, user['name'], days_left)
+                    print("##### DEBUG ##### In check_membership_expiration() Email sent to:", email)
+                except Exception as e:
+                    print("Error sending email to", email, ":", e)
+    print("##### DEBUG ##### In check_membership_expiration() Finished processing all users.")
 
 # ========= Context Processors =========
 @app.context_processor
