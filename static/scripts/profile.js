@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Set up the "List Old Events" button listener
     if (listOldEventsBtn) {
-        createEventBtn.addEventListener('click', function() {
+        listOldEventsBtn.addEventListener('click', function() {
             window.location.href = '/list_old_events';
         });
     }
