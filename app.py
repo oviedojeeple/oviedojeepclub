@@ -244,6 +244,7 @@ def get_all_users():
     users = []
     while url:
         response = requests.get(url, headers=headers)
+        print("##### DEBUG ##### In get_all_users() with response: ", response)
         if response.status_code == 200:
             data = response.json()
             users.extend(data.get("value", []))
@@ -1125,4 +1126,4 @@ print("##### DEBUG ##### Initialized scheduler - current jobs: ", scheduler.get_
 
 # ========= Main =========
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
