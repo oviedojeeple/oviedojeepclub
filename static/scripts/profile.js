@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const eventsContent = document.getElementById('events-section-content');
     const collectBtn = document.getElementById('collect-events-btn');
     const createEventBtn = document.getElementById('create-event-btn');
+    const listOldEventsBtn = document.getElementById('list-oldevents-btn');
     const renewSection = document.getElementById('renew-section');
     
     // Utility: Get URL parameters (if needed)
@@ -179,6 +180,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (createEventBtn) {
         createEventBtn.addEventListener('click', function() {
             window.location.href = '/create_event';
+        });
+    }
+
+    // Set up the "List Old Events" button listener
+    if (listOldEventsBtn) {
+        listOldEventsBtn.addEventListener('click', function() {
+            window.location.href = '/list_old_events';
         });
     }
     

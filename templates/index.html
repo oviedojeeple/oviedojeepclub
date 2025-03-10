@@ -83,10 +83,11 @@
                 <div id="sub-menu" class="sub-menu">
                   <button id="collect-events-btn" class="nav-btn sub-nav-btn">Facebook Sync</button>
                   <button id="create-event-btn" class="nav-btn sub-nav-btn">Create an Event</button>
+                  <button id="list-oldevents-btn" class="nav-btn sub-nav-btn">Old Events</button>
                 </div>
               {% endif %}
               <div id="events-section-content">
-                  <p>Loading events from Facebook...</p>
+                  <p>Loading events including Facebook Public events...</p>
               </div>
           </section>
           {% if user and user.member_expiration_iso %}

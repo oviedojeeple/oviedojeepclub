@@ -286,7 +286,7 @@ def get_all_users():
 
     return users
 
-def get_events_from_blob():
+def get_events_from_blob(future_only=True):
     print("##### DEBUG ##### In get_events_from_blob()")
     connection_string = AZURE_STORAGE_CONNECTION_STRING
     try:
@@ -300,7 +300,23 @@ def get_events_from_blob():
     try:
         blob_data = blob_client.download_blob().readall().decode('utf-8')
         events = json.loads(blob_data)
-        return events
+        
+        now = datetime.utcnow()
+
+        if future_only:
+            # Filter for only future events
+            events = [
+                event for event in events
+                if parse_date(event.get('start_time')) > now
+            ]
+        else:
+            # Filter for only past events
+            events = [
+                event for event in events
+                if parse_date(event.get('start_time')) <= now
+            ]
+
+        return sort_events_by_date_desc(events)
     except Exception as e:
         print("Error reading events blob:", e)
         return []
@@ -994,6 +1010,20 @@ def join():
     application_id = os.getenv('SQUARE_APPLICATION_ID')
     return render_template('index.html', application_id=application_id)
 
+@app.route('/list_old_events')
+@login_required
+def list_old_events():
+    print("##### DEBUG ##### In list_old_events()")
+    if current_user.job_title != 'OJC Board Member':
+        return jsonify({"error": "Unauthorized access"}), 403
+    
+    try:
+        past_events = get_events_from_blob(future_only=False)
+        return jsonify(past_events)
+    except Exception as e:
+        print("Error fetching old events:", e)
+        return jsonify({"error": "Unable to fetch old events"}), 500
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -1196,7 +1226,7 @@ def after_request(response):
 
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
-scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=14, minute=55, id="expiration_check")
+scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=15, minute=25, id="expiration_check")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
