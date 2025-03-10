@@ -8,6 +8,7 @@ from datetime import datetime
 from azure.storage.blob import BlobServiceClient, BlobLeaseClient
 from azure.data.tables import TableServiceClient, UpdateMode
 from azure.communication.email import EmailClient
+from azure.core.exceptions import ResourceExistsError
 from square.client import Client
 from urllib.parse import quote
 from event_uploader import upload_event_data
@@ -73,7 +74,6 @@ client = Client(
 
 LOCK_CONTAINER = "locks"
 LOCK_BLOB_NAME = "expiration_lock.txt"
-LEASE_DURATION = 1200  # seconds; set as needed
 
 # ========= Helper Classes =========
 class User(UserMixin):
@@ -157,6 +157,7 @@ def acquire_lock():
     try:
         container_client.create_container()
     except ResourceExistsError:
+        print("##### DEBUG ##### In acquire_lock() resource exists, passing...")
         pass
     except Exception as e:
         print("Unexpected error creating container:", e)
@@ -169,8 +170,8 @@ def acquire_lock():
         pass  # Already exists.
     try:
         lease = BlobLeaseClient(blob_client)
-        lease.acquire(lease_duration=LEASE_DURATION)
-        print("Lock acquired.")
+        lease.acquire(lease_duration=-1)
+        print("##### DEBUG ##### In acquire_lock() Lock acquired.")
         return lease
     except Exception as e:
         print("Could not acquire lock:", e)
@@ -420,7 +421,7 @@ def release_lock(lease):
     print("##### DEBUG ##### In release_lock()")
     try:
         lease.release()
-        print("Lock released.")
+        print("##### DEBUG ##### In release_lock() Lock released.")
     except Exception as e:
         print("Could not release lock:", e)
 
