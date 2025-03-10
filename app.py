@@ -827,7 +827,7 @@ def create_event():
             },
         }
         
-        events_list = get_events_from_blob()
+        events_list = get_events_from_blob(future_only=True)
         events_list.append(event)
         success, message = upload_events_to_blob(events_list)
         if success:
@@ -846,7 +846,7 @@ def delete_event(event_id):
         flash("You are not authorized to delete events.", "danger")
         return redirect(url_for("index"))
     
-    events_list = get_events_from_blob()
+    events_list = get_events_from_blob(future_only=True)
     new_events_list = [event for event in events_list if event.get("id") != event_id]
     
     if len(new_events_list) == len(events_list):
@@ -895,7 +895,7 @@ def facebook_callback():
         return jsonify({"error": "Unable to fetch events from Facebook"}), 500
 
     sorted_facebook_events = sort_events_by_date_desc(fb_events)
-    existing_events = get_events_from_blob()
+    existing_events = get_events_from_blob(future_only=True)
     custom_events = [ev for ev in existing_events if ev.get("id", "").startswith("OJC")]
     combined_events = custom_events + sorted_facebook_events
     combined_events = sort_events_by_date_desc(combined_events)
@@ -1227,7 +1227,7 @@ def after_request(response):
 
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
-scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=15, minute=25, id="expiration_check")
+scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=17, minute=30, id="expiration_check")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
