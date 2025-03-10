@@ -512,9 +512,13 @@ def check_membership_expiration():
     today = datetime.today().date()
     users = get_all_users()  
     for user in users:
-        expiration_str = user.get("member_expiration_iso")
-        if expiration_str:
-            expiration_date = datetime.strptime(expiration_str, "%Y-%m-%d").date()
+        print("##### DEBUG ##### In check_membership_expiration() current user: ", user)
+        expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+        if expiration_timestamp:
+            # If the timestamp appears to be in milliseconds, adjust:
+            if expiration_timestamp > 1e10:
+                expiration_timestamp = expiration_timestamp / 1000
+            expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
             days_left = (expiration_date - today).days
             if days_left in [90, 60, 30, 15, 1]:
                 send_disablement_reminder_email(user['email'], user['name'], days_left)
@@ -1116,6 +1120,8 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="interval", days=1, id="expiration_check")
+# scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=20, minute=30, id="expiration_check")
+
 scheduler.start()
 
 # ========= Main =========
