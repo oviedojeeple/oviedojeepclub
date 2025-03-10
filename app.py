@@ -5,7 +5,7 @@ from flask_restful import Resource, Api
 from flask_cors import CORS
 from flask_apscheduler import APScheduler
 from datetime import datetime
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, BlobLeaseClient
 from azure.data.tables import TableServiceClient, UpdateMode
 from azure.communication.email import EmailClient
 from square.client import Client
@@ -70,6 +70,10 @@ client = Client(
     access_token=SQUARE_ACCESS_TOKEN,
     environment='sandbox'  # Change to 'production' when ready
 )
+
+LOCK_CONTAINER = "locks"
+LOCK_BLOB_NAME = "expiration_lock.txt"
+LEASE_DURATION = 1200  # seconds; set as needed
 
 # ========= Helper Classes =========
 class User(UserMixin):
@@ -143,6 +147,33 @@ def _acquire_graph_api_token():
         return result["access_token"]
     else:
         print("Error acquiring Graph token:", result.get("error_description"))
+        return None
+
+def acquire_lock():
+    print("##### DEBUG ##### In acquire_lock()")
+    blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+    # Ensure the locks container exists.
+    container_client = blob_service_client.get_container_client(LOCK_CONTAINER)
+    try:
+        container_client.create_container()
+    except ResourceExistsError:
+        pass
+    except Exception as e:
+        print("Unexpected error creating container:", e)
+        raise
+    blob_client = container_client.get_blob_client(LOCK_BLOB_NAME)
+    # Create the blob if it doesn't exist.
+    try:
+        blob_client.upload_blob("lock", overwrite=False)
+    except Exception:
+        pass  # Already exists.
+    try:
+        lease = BlobLeaseClient(blob_client)
+        lease.acquire(lease_duration=LEASE_DURATION)
+        print("Lock acquired.")
+        return lease
+    except Exception as e:
+        print("Could not acquire lock:", e)
         return None
 
 def compute_expiration_date():
@@ -369,6 +400,14 @@ def parse_date(date_str):
             continue
     raise ValueError("No valid date format found for: " + date_str)
 
+def release_lock(lease):
+    print("##### DEBUG ##### In release_lock()")
+    try:
+        lease.release()
+        print("Lock released.")
+    except Exception as e:
+        print("Could not release lock:", e)
+
 def sort_events_by_date_desc(events):
     print("##### DEBUG ##### In sort_events_by_date_desc()")
     return sorted(
@@ -518,41 +557,6 @@ def store_invitation(token, data, expire_seconds=3600):
         "CreatedAt": datetime.utcnow().isoformat()
     }
     table_client.upsert_entity(entity=entity, mode=UpdateMode.REPLACE)
-
-def check_membership_expiration():
-    print("##### DEBUG ##### In check_membership_expiration()")
-    run_id = uuid.uuid4()
-    start_time = datetime.utcnow().isoformat()
-    pid = os.getpid()
-    print(f"##### DEBUG ##### In check_membership_expiration() [{start_time}] [PID {pid}] expiration_check job STARTED. Run ID: {run_id}")
-    today = datetime.today().date()
-    users = get_all_users()
-    processed_ids = set()  # Keep track of processed user IDs
-
-    for user in users:
-        user_id = user.get("id")
-        if user_id in processed_ids:
-            continue  # Skip duplicates
-        processed_ids.add(user_id)
-        print("##### DEBUG ##### In check_membership_expiration() Processing user:", user)
-        expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
-        if expiration_timestamp:
-            # If the timestamp appears to be in milliseconds, adjust:
-            if expiration_timestamp > 1e10:
-                expiration_timestamp = expiration_timestamp / 1000
-            expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
-            days_left = (expiration_date - today).days
-            if days_left in [90, 60, 30, 15, 1]:
-                # Reconstruct the actual email from mailNickname (if necessary)
-                email = user.get('mailNickname', '').replace('_at_', '@')
-                print("##### DEBUG ##### In check_membership_expiration() about to send email to:", email)
-                try:
-                    send_disablement_reminder_email(email, user.get('displayName', 'Member'), days_left)
-                    print("##### DEBUG ##### In check_membership_expiration() Email sent to:", email)
-                except Exception as e:
-                    print("Error sending email to", email, ":", e)
-    end_time = datetime.utcnow().isoformat()
-    print(f"##### DEBUG ##### In check_membership_expiration() [{end_time}] [PID {pid}] expiration_check job FINISHED. Run ID: {run_id}")
     
 # ========= Context Processors =========
 @app.context_processor
@@ -562,6 +566,48 @@ def inject_now():
 @app.context_processor
 def inject_user_data():
     return {"user_data": session.get("user", {})}
+
+def check_membership_expiration():
+    print("##### DEBUG ##### In check_membership_expiration()")
+    run_id = uuid.uuid4()
+    start_time = datetime.utcnow().isoformat()
+    pid = os.getpid()
+    print(f"##### DEBUG ##### In check_membership_expiration() [{start_time}] [PID {pid}] expiration_check job STARTED. Run ID: {run_id}")
+    lease = acquire_lock()
+    if not lease:
+        print("##### DEBUG ##### In check_membership_expiration() - Another instance is processing; skipping this run.")
+        end_time = datetime.utcnow().isoformat()
+        print(f"##### DEBUG ##### In check_membership_expiration() [{end_time}] [PID {pid}] expiration_check job DID NOT START. Run ID: {run_id}")
+        return
+    try:
+        print("##### DEBUG ##### In check_membership_expiration() - begin processing...")
+        today = datetime.today().date()
+        users = get_all_users()
+        processed_ids = set()  # To avoid duplicates within one run.
+        for user in users:
+            user_id = user.get("id")
+            if user_id in processed_ids:
+                continue
+            processed_ids.add(user_id)
+            print("Processing user:", user)
+            expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+            if expiration_timestamp:
+                if expiration_timestamp > 1e10:
+                    expiration_timestamp = expiration_timestamp / 1000
+                expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
+                days_left = (expiration_date - today).days
+                if days_left in [90, 60, 30, 15, 1]:
+                    email = user.get('mailNickname', '').replace('_at_', '@')
+                    print("About to send email to:", email)
+                    try:
+                        send_disablement_reminder_email(email, user.get('displayName', 'Member'), days_left)
+                        print("Email sent to:", email)
+                    except Exception as e:
+                        print("Error sending email to", email, ":", e)
+        end_time = datetime.utcnow().isoformat()
+        print(f"##### DEBUG ##### In check_membership_expiration() [{end_time}] [PID {pid}] expiration_check job FINISHED. Run ID: {run_id}")
+    finally:
+        release_lock(lease)
 
 # ========= Routes =========
 @app.route('/favicon.ico')
