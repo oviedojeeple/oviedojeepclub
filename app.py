@@ -381,7 +381,7 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
         # Define the login URL for renewal; update this to your actual URL if different.
-        login_url = "https://www.oviedojeepclub.com/login"
+        login_url = "https://test.oviedojeepclub.com/login"
         message = {
             "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
             "content": {
@@ -1145,7 +1145,7 @@ def after_request(response):
 
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
-scheduler.add_job(func=check_membership_expiration, trigger="interval", hours=12, id="expiration_check")
+scheduler.add_job(func=check_membership_expiration, trigger="interval", minutes=3, id="expiration_check")
 scheduler.start()
 print("##### DEBUG ##### Initialized scheduler - current jobs: ", scheduler.get_jobs())
 
