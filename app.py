@@ -1120,8 +1120,8 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="interval", minutes=3, id="expiration_check")
-
 scheduler.start()
+print("##### DEBUG ##### Initialized scheduler - current jobs: ", scheduler.get_jobs())
 
 # ========= Main =========
 if __name__ == '__main__':
