@@ -380,20 +380,25 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     print("##### DEBUG ##### In send_disablement_reminder_email()")
     email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
     try:
+        # Define the login URL for renewal; update this to your actual URL if different.
+        login_url = "https://www.oviedojeepclub.com/login"
         message = {
             "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
             "content": {
                 "subject": "Membership Expiration Reminder",
                 "plainText": (
                     f"Hello {recipient_name},\n\n"
-                    f"Your membership is set to expire in {days_left} day(s). "
-                    "Please renew your membership to continue enjoying Oviedo Jeep Club benefits."
+                    f"Your membership is set to expire in {days_left} day(s).\n\n"
+                    "To renew your membership, please log in to your account using the link below and click on the 'Renew Membership' button:\n"
+                    f"{login_url}\n\n"
+                    "Thank you for being a valued member of the Oviedo Jeep Club."
                 ),
                 "html": (
                     f"<html><body><h1>Membership Expiration Reminder</h1>"
                     f"<p>Hello {recipient_name},</p>"
-                    f"<p>Your membership is set to expire in <strong>{days_left}</strong> day(s). "
-                    "Please renew your membership to continue enjoying Oviedo Jeep Club benefits.</p>"
+                    f"<p>Your membership is set to expire in <strong>{days_left}</strong> day(s).</p>"
+                    f"<p>To renew your membership, please <a href='{login_url}'>log in</a> to your account and click on the 'Renew Membership' button.</p>"
+                    f"<p>Thank you for being a valued member of the Oviedo Jeep Club.</p>"
                     f"</body></html>"
                 )
             },
@@ -517,9 +522,15 @@ def store_invitation(token, data, expire_seconds=3600):
 def check_membership_expiration():
     print("##### DEBUG ##### In check_membership_expiration()")
     today = datetime.today().date()
-    users = get_all_users()  
+    users = get_all_users()
+    processed_ids = set()  # Keep track of processed user IDs
+
     for user in users:
-        print("##### DEBUG ##### In check_membership_expiration() current user: ", user)
+        user_id = user.get("id")
+        if user_id in processed_ids:
+            continue  # Skip duplicates
+        processed_ids.add(user_id)
+        print("##### DEBUG ##### In check_membership_expiration() Processing user:", user)
         expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
         if expiration_timestamp:
             # If the timestamp appears to be in milliseconds, adjust:
@@ -528,10 +539,11 @@ def check_membership_expiration():
             expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
             days_left = (expiration_date - today).days
             if days_left in [90, 60, 30, 15, 1]:
-                email = user['mailNickname'].replace('_at_', '@')
-                print("##### DEBUG ##### In check_membership_expiration() about to send email to: ", email)
+                # Reconstruct the actual email from mailNickname (if necessary)
+                email = user.get('mailNickname', '').replace('_at_', '@')
+                print("##### DEBUG ##### In check_membership_expiration() about to send email to:", email)
                 try:
-                    send_disablement_reminder_email(email, user['displayName'], days_left)
+                    send_disablement_reminder_email(email, user.get('displayName', 'Member'), days_left)
                     print("##### DEBUG ##### In check_membership_expiration() Email sent to:", email)
                 except Exception as e:
                     print("Error sending email to", email, ":", e)
