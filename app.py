@@ -525,7 +525,7 @@ def check_membership_expiration():
                 email = user['mailNickname'].replace('_at_', '@')
                 print("##### DEBUG ##### In check_membership_expiration() about to send email to: ", email)
                 try:
-                    send_disablement_reminder_email(email, user['name'], days_left)
+                    send_disablement_reminder_email(email, user['displayName'], days_left)
                     print("##### DEBUG ##### In check_membership_expiration() Email sent to:", email)
                 except Exception as e:
                     print("Error sending email to", email, ":", e)
