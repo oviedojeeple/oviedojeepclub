@@ -1,5 +1,5 @@
 # ========= Imports =========
-from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session, flash, redirect
+from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for, session, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_restful import Resource, Api
 from flask_cors import CORS
@@ -521,6 +521,10 @@ def store_invitation(token, data, expire_seconds=3600):
 
 def check_membership_expiration():
     print("##### DEBUG ##### In check_membership_expiration()")
+    run_id = uuid.uuid4()
+    start_time = datetime.utcnow().isoformat()
+    pid = os.getpid()
+    print(f"##### DEBUG ##### In check_membership_expiration() [{start_time}] [PID {pid}] expiration_check job STARTED. Run ID: {run_id}")
     today = datetime.today().date()
     users = get_all_users()
     processed_ids = set()  # Keep track of processed user IDs
@@ -547,8 +551,9 @@ def check_membership_expiration():
                     print("##### DEBUG ##### In check_membership_expiration() Email sent to:", email)
                 except Exception as e:
                     print("Error sending email to", email, ":", e)
-    print("##### DEBUG ##### In check_membership_expiration() Finished processing all users.")
-
+    end_time = datetime.utcnow().isoformat()
+    print(f"##### DEBUG ##### In check_membership_expiration() [{end_time}] [PID {pid}] expiration_check job FINISHED. Run ID: {run_id}")
+    
 # ========= Context Processors =========
 @app.context_processor
 def inject_now():
@@ -1147,7 +1152,8 @@ def after_request(response):
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=12, minute=0, id="expiration_check")
 scheduler.start()
-print("##### DEBUG ##### Initialized scheduler - current jobs: ", scheduler.get_jobs())
+jobs = scheduler.get_jobs()
+print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
 
 # ========= Main =========
 if __name__ == '__main__':
