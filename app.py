@@ -238,7 +238,7 @@ def get_all_users():
         return []
     
     headers = {"Authorization": f"Bearer {token}"}
-    select_fields = "id,displayName,mail,extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate"
+    select_fields = "id,displayName,mailNickname,extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate"
     url = f"https://graph.microsoft.com/v1.0/users?$select={select_fields}"
     
     users = []
@@ -522,7 +522,9 @@ def check_membership_expiration():
             expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
             days_left = (expiration_date - today).days
             if days_left in [90, 60, 30, 15, 1]:
-                send_disablement_reminder_email(user['email'], user['name'], days_left)
+                email = user['mailNickname'].replace('_at_', '@')
+                print("##### DEBUG ##### In check_membership_expiration() about to send email to: ", email)
+                send_disablement_reminder_email(email, user['name'], days_left)
 
 # ========= Context Processors =========
 @app.context_processor
