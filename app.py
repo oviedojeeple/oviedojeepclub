@@ -1024,10 +1024,11 @@ def join():
     application_id = os.getenv('SQUARE_APPLICATION_ID')
     return render_template('index.html', application_id=application_id)
 
-@app.route('/list_old_events', methods=['GET', 'POST'])
+@app.route('/list_old_events', methods=['GET'])
 @login_required
 def list_old_events():
     print("##### DEBUG ##### In list_old_events()")
+    
     if current_user.job_title != 'OJC Board Member':
         return jsonify({"error": "Unauthorized access"}), 403
     
