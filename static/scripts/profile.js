@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         
                         // Only show a delete button if the event is custom (ID starts with OJC)
                         let deleteButtonHtml = '';
-                        if (event.id.startsWith("OJC")) {
+                        if (event.id.startsWith("OJC") && userJobTitle === 'OJC Board Member') {
                             deleteButtonHtml = `<button class="delete-event-btn" data-event-id="${event.id}">Delete</button>`;
                         }
 
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to load old events from the blob
     function loadOldEvents() {
-        fetch('/list_old_events')
+        fetch('/list_old_events', { method: 'GET' }) // Force GET request
             .then(response => response.json())
             .then(data => {
                 eventsContent.innerHTML = ''; // Clear existing events
