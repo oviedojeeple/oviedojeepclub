@@ -1034,7 +1034,8 @@ def list_old_events():
     try:
         # Get only past events
         past_events = get_events_from_blob(future_only=False)
-        return jsonify(past_events)
+        sorted_events = sort_events_by_date_desc(past_events)
+        return jsonify(sorted_events)
     except Exception as e:
         print("Error fetching old events:", e)
         return jsonify({"error": "Unable to fetch old events"}), 500
