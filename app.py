@@ -1024,7 +1024,7 @@ def join():
     application_id = os.getenv('SQUARE_APPLICATION_ID')
     return render_template('index.html', application_id=application_id)
 
-@app.route('/list_old_events')
+@app.route('/list_old_events', methods=['GET', 'POST'])
 @login_required
 def list_old_events():
     print("##### DEBUG ##### In list_old_events()")
