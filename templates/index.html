@@ -175,6 +175,7 @@
   <script>
       var fbAccessToken = {{ session.get("fb_access_token")|tojson|default("null") }};
       var isAuthenticated = {{ user.is_authenticated | tojson }};
+      var userJobTitle = {{ user.job_title | tojson|default("null") }};
       const applicationId = "{{ application_id }}";
       window.applicationId = applicationId;
   </script>
