@@ -1030,16 +1030,18 @@ def list_old_events():
     print("##### DEBUG ##### In list_old_events()")
     
     if current_user.job_title != 'OJC Board Member':
-        return jsonify({"error": "Unauthorized access"}), 403
+        flash("You are not authorized to view old events.", "danger")
+        return redirect(url_for('index'))
     
     try:
         # Get only past events
         past_events = get_events_from_blob(future_only=False)
         sorted_events = sort_events_by_date_desc(past_events)
-        return jsonify(sorted_events)
+        return render_template('index.html', application_id=application_id, user=current_user, old_events=sorted_events)
     except Exception as e:
         print("Error fetching old events:", e)
-        return jsonify({"error": "Unable to fetch old events"}), 500
+        flash("Unable to fetch old events.", "danger")
+        return redirect(url_for('index'))
 
 @app.route("/logout")
 @login_required
