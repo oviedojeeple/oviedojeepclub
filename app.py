@@ -1037,7 +1037,7 @@ def list_old_events():
         # Get only past events
         past_events = get_events_from_blob(future_only=False)
         sorted_events = sort_events_by_date_desc(past_events)
-        return render_template('index.html', application_id=None, user=current_user, old_events=sorted_events)
+        return redirect(url_for("index", section="events"))
     except Exception as e:
         print("Error fetching old events:", e)
         flash("Unable to fetch old events.", "danger")
