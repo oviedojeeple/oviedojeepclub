@@ -764,7 +764,15 @@ def blob_events():
         blob_client = blob_service_client.get_blob_client(container=container_name, blob="events.json")
         events_blob = blob_client.download_blob().readall()
         events_data = json.loads(events_blob)
-        sorted_events = sort_events_by_date_desc(events_data)
+        
+        # Only show future events by default
+        now = datetime.utcnow()
+        future_events = [
+            event for event in events_data
+            if parse_date(event.get('start_time')) > now
+        ]
+        
+        sorted_events = sort_events_by_date_desc(future_events)
         return jsonify(sorted_events)
     except Exception as e:
         print("Error reading blob events:", e)
@@ -895,15 +903,20 @@ def facebook_callback():
         return jsonify({"error": "Unable to fetch events from Facebook"}), 500
 
     sorted_facebook_events = sort_events_by_date_desc(fb_events)
+    
+    # Get existing local events (DO NOT OVERWRITE)
     existing_events = get_events_from_blob(future_only=True)
-    custom_events = [ev for ev in existing_events if ev.get("id", "").startswith("OJC")]
-    combined_events = custom_events + sorted_facebook_events
+    local_events = [ev for ev in existing_events if ev.get("id", "").startswith("OJC")]
+
+    # Combine local events and Facebook events without overwriting
+    combined_events = local_events + sorted_facebook_events
     combined_events = sort_events_by_date_desc(combined_events)
     
     success, message = upload_events_to_blob(combined_events)
     if not success:
         return jsonify({"error": message}), 500
 
+    flash("Facebook events synced successfully!", "success")
     return redirect(url_for("index", section="events"))
 
 @app.route('/family-members', methods=['GET'])
@@ -1019,6 +1032,7 @@ def list_old_events():
         return jsonify({"error": "Unauthorized access"}), 403
     
     try:
+        # Get only past events
         past_events = get_events_from_blob(future_only=False)
         return jsonify(past_events)
     except Exception as e:
