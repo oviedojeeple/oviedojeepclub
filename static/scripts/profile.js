@@ -87,6 +87,57 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    // Function to load old events from the blob
+    function loadOldEvents() {
+        fetch('/list_old_events')
+            .then(response => response.json())
+            .then(data => {
+                eventsContent.innerHTML = ''; // Clear existing events
+    
+                if (data.error) {
+                    eventsContent.innerHTML = `<p>Error: ${data.error}</p>`;
+                    return;
+                }
+    
+                if (data.length === 0) {
+                    eventsContent.innerHTML = '<p>No past events found.</p>';
+                } else {
+                    data.forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.classList.add('event');
+                        const startDate = new Date(event.start_time).toLocaleString();
+    
+                        // Include cover image if available
+                        let coverHtml = '';
+                        if (event.cover && event.cover.source && event.cover.source.trim() !== '') {
+                            coverHtml = `<img src="${event.cover.source}" alt="Event Cover" class="event-cover">`;
+                        }
+    
+                        // Show delete button for custom events (if applicable)
+                        let deleteButtonHtml = '';
+                        if (event.id.startsWith("OJC")) {
+                            deleteButtonHtml = `<button class="delete-event-btn" data-event-id="${event.id}">Delete</button>`;
+                        }
+    
+                        eventDiv.innerHTML = `
+                            ${coverHtml}
+                            <h3>${event.name}</h3>
+                            <p><strong>Start:</strong> ${startDate}</p>
+                            <p>${event.description}</p>
+                            <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
+                            ${deleteButtonHtml}
+                        `;
+    
+                        eventsContent.appendChild(eventDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error loading old events", error);
+                eventsContent.innerHTML = '<p>Error loading old events.</p>';
+            });
+    }
+    
     // Attach event delegation for delete buttons on the events container.
     if (eventsContent) {
         eventsContent.addEventListener('click', function(e) {
@@ -144,6 +195,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = '/logout';
             });
         }
+
+        // Set up the "List Old Events" button listener
+        if (listOldEventsBtn) {
+            listOldEventsBtn.addEventListener('click', function() {
+                showSection('events');
+                loadOldEvents(); // Load old events on click
+            });
+        }
+
         
         // Check if URL has section=events; if so, load events
         const sectionParam = getQueryParam("section");
