@@ -584,6 +584,18 @@ def inject_now():
 def inject_user_data():
     return {"user_data": session.get("user", {})}
 
+@app.template_filter('timestamp_to_year')
+def timestamp_to_year(ts):
+    try:
+        ts = int(ts)
+        # If timestamp is in milliseconds, convert to seconds.
+        if ts > 1e10:
+            ts = ts / 1000
+        return datetime.fromtimestamp(ts).year
+    except Exception as e:
+        print("Error converting timestamp to year:", e)
+        return "N/A"
+
 def check_membership_expiration():
     print("##### DEBUG ##### In check_membership_expiration()")
     run_id = uuid.uuid4()
