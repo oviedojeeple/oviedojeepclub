@@ -1,6 +1,18 @@
 # Oviedo Jeep Club Web Application
 
-The Oviedo Jeep Club Web Application is a Flask-based project designed to serve as the online presence for the club. It combines a Python backend with HTML templates and static assets (CSS, JavaScript, images) to deliver a responsive and interactive experience. This README provides an overview of each file, instructions for installation and usage, and guidelines for contribution.
+## Overview
+
+The Oviedo Jeep Club Web Application is a Flask-based platform designed to manage club memberships and synchronize public events from the club's Facebook Page. It leverages Azure Entra ID B2C for secure user authentication and utilizes the Facebook Graph API to keep the events section current. The application is hosted on Azure App Service, ensuring scalability and reliable performance.
+
+## Features
+
+- **User Authentication**: Secure login using Azure Entra ID B2C, supporting email/password authentication.
+- **Membership Management**: Efficient handling of membership registration, renewals, and cancellations.
+- **Membership Payments Processing**: Use of Square as payment processor for New Membership and Renewals
+- **Facebook Events Synchronization**: Automatic synchronization of public events from the [Oviedo Jeep Club Facebook Page](https://www.facebook.com/oviedojeeple) using the Facebook Graph API.
+- **Email Communications**: Automated email notifications via Azure Email Communication Service.
+- **Secure Sessions**: Enhanced session security with dynamic secret key generation.
+- **Responsive Design**: User-friendly interface compatible with various devices.
 
 ## Table of Contents
 
@@ -16,12 +28,31 @@ The Oviedo Jeep Club Web Application is a Flask-based project designed to serve 
 - [License](#license)
 - [Contact](#contact)
 
-## Overview
-
-This project is built using Python (with Flask as the web framework) to manage routing, handle business logic, and render HTML pages. The front end is developed with HTML, CSS, and JavaScript to ensure a modern and responsive design. The application provides a main landing page along with pages for privacy policies and data deletion requests.
-
 ## Repository Structure
 
+```
+oviedojeepclub/
+├── .github/
+│   └── workflows/
+│       └── azure-webapps-deploy.yml
+├── static/
+│   ├── css/
+│   ├── images/
+│   └── js/
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   └── ...
+├── utilities/
+│   └── facebook_events.py
+├── .gitignore
+├── LICENSE
+├── README.md
+├── app.py
+├── event_uploader.py
+├── requirements.txt
+└── startup.sh
+```
 Below is a breakdown of the repository’s key files and directories:
 
 ### Root-Level Files
@@ -92,7 +123,9 @@ Static files are served from the `static` directory. This includes styling, imag
 
 - **Python 3.x:** Ensure Python is installed on your system.
 - **Pip:** The Python package installer.
-- **Virtual Environment (optional but recommended):** For dependency management.
+- **Azure Entra ID B2C tenant configured
+- **Facebook Developer account with access to the Graph API
+- **Square Developer account with access to the Payments API
 
 ### Installation Steps
 
@@ -125,6 +158,21 @@ Static files are served from the `static` directory. This includes styling, imag
    ```bash
    python app.py
 
+4. **Configuration:**
+
+   Set environment variables for Azure authentication, email service, and Facebook API access:
+  
+   ```bash
+   export AZURE_CLIENT_ID="your-client-id"
+   export AZURE_CLIENT_SECRET="your-client-secret"
+   export AZURE_TENANT_ID="your-tenant-id"
+   export FACEBOOK_PAGE_ID="your-facebook-page-id"
+   export FACEBOOK_ACCESS_TOKEN="your-facebook-access-token"
+   ```
+  
+   Obtain the `FACEBOOK_ACCESS_TOKEN` from the [Facebook Graph API documentation](https://developers.facebook.com/docs/graph-api/get-started/).
+
+
 ## Usage
 
 - Open your web browser and navigate to `http://127.0.0.1:5000` (or the specified port) to view the application.
@@ -151,29 +199,71 @@ Static files are served from the `static` directory. This includes styling, imag
 - **Templates:**  
   Update content and structure by editing files in the `templates` folder.
 
-## Contributing
+## Running the Application
 
-Contributions are welcome! Here’s how you can help improve the project:
+Set Flask application environment variable:
 
-1. **Fork the Repository:**  
-   Create your own copy by clicking the “Fork” button on GitHub.
-2. **Create a Feature Branch:**
+```bash
+export FLASK_APP=app.py
+```
 
-   ```bash
-   git checkout -b feature/my-feature
-3. **Make Your Changes:**  
-   Commit changes with clear messages.
-4. **Push to Your Branch:**
+Run the Flask application:
 
-   ```bash
-   git push origin feature/my-feature
-5. **Submit a Pull Request:**  
-   Open a PR on GitHub with a description of your changes.
+```bash
+flask run
+```
+
+Access the application at `http://127.0.0.1:5000/`.
+
+## Deployment
+
+The application is configured for Azure App Service deployment using GitHub Actions (`.github/workflows/azure-webapps-deploy.yml`). Ensure Azure credentials and secrets are set in GitHub repository settings.
+
+Manual deployment instructions: [Microsoft Quickstart guide](https://learn.microsoft.com/en-us/azure/app-service/quickstart-python?tabs=flask).
+
+## Facebook Events Synchronization
+
+The `utilities/facebook_events.py` module interacts with the Facebook Graph API to fetch and update events:
+
+1. Create a Facebook App at [Facebook Developer Portal](https://developers.facebook.com/).
+2. Generate a long-lived Access Token with `pages_read_engagement` permission.
+3. Schedule synchronization with `event_uploader.py`.
+
+## Email Communications
+
+Automated emails via Azure Email Communication Service. Follow [Azure's documentation](https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/email/send-email) for setup.
+
+## Secure Sessions
+
+Secure sessions with dynamic Flask secret keys. Set the `SECRET_KEY` environment variable accordingly.
+
+## Contribution
+
+To contribute:
+
+1. Fork the repository.
+2. Create a new branch:
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+3. Commit and push changes:
+
+```bash
+git commit -m "Your commit message"
+git push origin feature/your-feature-name
+```
+
+4. Submit a pull request.
 
 ## License
 
-This project is distributed under the terms of the MIT License. See the [LICENSE](https://github.com/oviedojeeple/oviedojeepclub/blob/main/LICENSE) file for details.
+Licensed under the MIT License. See the [LICENSE](LICENSE) file.
 
 ## Contact
 
-For questions, suggestions, or further details, please contact the project maintainers.
+For inquiries, visit [Oviedo Jeep Club](https://oviedojeepclub.com) or their [Facebook Page](https://www.facebook.com/oviedojeeple).
+
+Happy Jeeping! 🛞🌲 o|||||||o
+
