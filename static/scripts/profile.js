@@ -93,16 +93,17 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 eventsContent.innerHTML = ''; // Clear existing events
-    
+        
                 if (data.error) {
+                    console.error("Error loading old events:", data.error);
                     eventsContent.innerHTML = `<p>Error: ${data.error}</p>`;
                     return;
                 }
     
-                if (data.length === 0) {
+                if (data.events.length === 0) {
                     eventsContent.innerHTML = '<p>No past events found.</p>';
                 } else {
-                    data.forEach(event => {
+                    data.events.forEach(event => {
                         const eventDiv = document.createElement('div');
                         eventDiv.classList.add('event');
                         const startDate = new Date(event.start_time).toLocaleString();
@@ -115,25 +116,32 @@ document.addEventListener('DOMContentLoaded', function () {
     
                         // Show delete button for custom events (if applicable)
                         let deleteButtonHtml = '';
-                        if (event.id.startsWith("OJC")) {
+                        if (event.id.startsWith("OJC") && userJobTitle === 'OJC Board Member') {
                             deleteButtonHtml = `<button class="delete-event-btn" data-event-id="${event.id}">Delete</button>`;
                         }
     
+                        // Build the Facebook link only if the event ID does NOT start with "OJC"
+                        let facebookLinkHtml = '';
+                        if (!event.id.startsWith("OJC")) {
+                            facebookLinkHtml = `<p><a href="https://www.facebook.com/events/${event.id}" target="_blank">View on Facebook</a></p>`;
+                        }
+    
+                        // Construct event HTML
                         eventDiv.innerHTML = `
                             ${coverHtml}
                             <h3>${event.name}</h3>
                             <p><strong>Start:</strong> ${startDate}</p>
                             <p>${event.description}</p>
                             <p><strong>Location:</strong> ${event.place ? event.place.name : 'N/A'}</p>
+                            ${facebookLinkHtml}
                             ${deleteButtonHtml}
                         `;
-    
                         eventsContent.appendChild(eventDiv);
                     });
                 }
             })
             .catch(error => {
-                console.error("Error loading old events", error);
+                console.error("Error loading old events:", error);
                 eventsContent.innerHTML = '<p>Error loading old events.</p>';
             });
     }
@@ -147,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     fetch(`/delete_event/${eventId}`, { method: 'POST' })
                         .then(response => {
                             if (response.ok) {
-                                loadBlobEvents(); // Reload events after deletion.
+                                loadOldEvents(); // Reload events after deletion
                             } else {
                                 alert("Error deleting event.");
                             }
@@ -246,7 +254,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set up the "List Old Events" button listener
     if (listOldEventsBtn) {
         listOldEventsBtn.addEventListener('click', function() {
-            window.location.href = '/list_old_events';
+            showSection('events');
+            loadOldEvents(); // Load old events on click
         });
     }
     
