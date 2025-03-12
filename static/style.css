@@ -64,6 +64,13 @@ body {
     text-align: left;
 }
 
+/* Fine print messages style */
+.fine-print {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 8px;
+}
+
 /* Base style for flash messages */
 .flash-message {
     padding: 15px;
