@@ -1166,7 +1166,7 @@ def renew_membership():
             "$filter": filter_clause
         }
         url = "https://graph.microsoft.com/v1.0/users"
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=graph_headers, params=params)
         if response.status_code == 200:
             users = response.json().get("value", [])
             print("##### DEBUG ##### In renew_membership() Found users for renewal:", users)
@@ -1176,7 +1176,7 @@ def renew_membership():
                 patch_payload = {
                     "extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate": new_expiration_date
                 }
-                patch_response = requests.patch(patch_url, headers=headers, json=patch_payload)
+                patch_response = requests.patch(patch_url, headers=graph_headers, json=patch_payload)
                 if patch_response.status_code not in [200, 204]:
                     print(f"Error updating user {user_id}: {patch_response.text}")
             try:
