@@ -54,13 +54,19 @@
                 <tr><td>Member</td><td>{{ user.membership_number }}</td></tr>
                 {% if user and user.job_title == 'OJC Board Member' %}
                   <tr><td>OJC Role</td><td>{{ user.job_title }}</td></tr>
+                {% elif user and (user.member_joined_raw | timestamp_to_year) == 2017 %}
+                  <tr><td>OJC Role</td><td>OJC OG Member</td></tr>
                 {% else %}
                   <tr><td>OJC Role</td><td>OJC Member</td></tr>
                 {% endif %}
-                  <tr>
-                    <td>Expiration Date</td>
-                    <td>{{ user.member_expiration_date }}</td>
-                  </tr>
+                <tr>
+                  <td>Member Since</td>
+                  <td>{{ user.member_joined_raw | timestamp_to_year }}</td>
+                </tr>
+                <tr>
+                  <td>Expiration Date</td>
+                  <td>{{ user.member_expiration_date }}</td>
+                </tr>
               </table>
           </section>
           <section id="family-section">
