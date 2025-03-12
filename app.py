@@ -16,7 +16,6 @@ import msal
 import os, time, requests, json, uuid
 
 # ========= App Initialization and Configuration =========
-app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Secure session key (random per restart)
 CORS(app)
 api = Api(app)
