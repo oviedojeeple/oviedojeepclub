@@ -177,6 +177,47 @@ def acquire_lock():
         print("Could not acquire lock:", e)
         return None
 
+def check_event_reminders():
+    print("##### DEBUG ##### In check_event_reminders()")
+    # Retrieve future events from blob storage
+    events = get_events_from_blob(future_only=True)
+    if not events:
+        print("No events available for reminders.")
+        return
+    today = datetime.today().date()
+    # Retrieve all active members (users)
+    users = get_all_users()
+    
+    for event in events:
+        try:
+            event_date = parse_date(event.get("start_time")).date()
+        except Exception as e:
+            print("Error parsing event date for event:", event.get("name"), e)
+            continue
+        
+        days_left = (event_date - today).days
+        # Check if the event is exactly 15, 7, or 1 day away
+        if days_left in [15, 7, 1]:
+            print(f"Event '{event.get('name')}' is starting in {days_left} days.")
+            # Loop through active members and only email those whose membership expiration is prior to the event date.
+            for user in users:
+                expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+                if expiration_timestamp:
+                    # Convert timestamp if in milliseconds
+                    if expiration_timestamp > 1e10:
+                        expiration_timestamp = expiration_timestamp / 1000
+                    user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
+                    # Only send email if the user's expiration date is before the event date.
+                    if user_expiration_date < event_date:
+                        email = user.get('mailNickname', '').replace('_at_', '@')
+                        display_name = user.get('displayName', 'Member')
+                        try:
+                            send_event_reminder_email(email, display_name, event, days_left)
+                            print("Sent event reminder email to:", email)
+                        except Exception as e:
+                            print("Error sending event reminder email to", email, ":", e)
+
+
 def compute_expiration_date():
     print("##### DEBUG ##### In compute_expiration_date()")
     now = datetime.now()
@@ -481,6 +522,55 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
         print("##### DEBUG ##### In send_disablement_reminder_email() Email sent! Result:", result)
     except Exception as e:
         print("Error sending disablement reminder email:", e)
+
+def send_event_reminder_email(recipient_email, recipient_name, event, days_left):
+    print("##### DEBUG ##### In send_event_reminder_email()")
+    event_name = event.get('name')
+    event_start_time = event.get('start_time')
+    # Render the HTML email template for event reminder
+    html_content = render_template(
+        'emails/event_reminder.html',
+        recipient_name=recipient_name,
+        event_name=event_name,
+        event_start_time=event_start_time,
+        days_left=days_left,
+        current_year=datetime.now().year
+    )
+    
+    # Read and base64-encode the image (using the same image as other emails)
+    with open('static/images/ojc.png', 'rb') as img_file:
+        img_bytes = img_file.read()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+    
+    # Build the email message payload with an attachment
+    message = {
+        "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+        "content": {
+            "subject": f"Event Reminder: {event_name} starts in {days_left} day{'s' if days_left > 1 else ''}",
+            "html": html_content
+        },
+        "recipients": {
+            "to": [
+                {"address": recipient_email, "displayName": recipient_name}
+            ]
+        },
+        "attachments": [
+            {
+                "name": "ojc.png",
+                "contentType": "image/png",
+                "contentInBase64": img_base64,
+                "contentId": "ojc_logo"  # This should match the CID in your HTML.
+            }
+        ]
+    }
+    
+    try:
+        email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
+        poller = email_client.begin_send(message)
+        result = poller.result()
+        print("##### DEBUG ##### In send_event_reminder_email() Email sent! Result:", result)
+    except Exception as e:
+        print("Error sending event reminder email:", e)
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
@@ -1314,6 +1404,7 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=17, minute=30, id="expiration_check")
+scheduler.add_job(func=check_event_reminders, trigger="cron", hour=17, minute=0, id="event_reminder")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
