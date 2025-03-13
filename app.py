@@ -442,7 +442,6 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     html_content = render_template(
         'emails/disablement_reminder.html',
         recipient_name=recipient_name,
-        invitation_link=invitation_link,
         login_url=login_url,
         days_left=days_left,
         current_year=datetime.now().year
@@ -452,7 +451,7 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     message = {
         "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
         "content": {
-            subject = f"Membership Expiration Reminder - {days_left} Days Left",
+            "subject": f"Membership Expiration Reminder - {days_left} Days Left",
             "html": html_content
         },
         "recipients": {
@@ -512,7 +511,6 @@ def send_membership_renewal_email(recipient_email, recipient_name):
     html_content = render_template(
         'emails/membership_renewal.html',
         recipient_name=recipient_name,
-        invitation_link=invitation_link,
         current_year=datetime.now().year
     )
 
@@ -545,7 +543,6 @@ def send_new_membership_email(recipient_email, recipient_name, receipt_url):
     html_content = render_template(
         'emails/new_membership.html',
         recipient_name=recipient_name,
-        invitation_link=invitation_link,
         receipt_url=receipt_url,
         current_year=datetime.now().year
     )
