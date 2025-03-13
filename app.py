@@ -1262,9 +1262,9 @@ def renew_membership():
             session["user_data"]["member_expiration_iso"] = member_expiration_iso
 
             flash('Payment Successful! Your renewal has been updated for all members.', 'success')
+            send_membership_renewal_email(current_user.email, current_user.name)
             return jsonify(success=True, message="Membership renewed successfully")
         else:
-            send_membership_renewal_email(current_user.email, current_user.name)
             flash('Payment succeeded but failed to update membership. Share error with Administrator.', 'danger')
             return jsonify(success=False, message="Payment succeeded but failed to update membership"), 500
     else:
