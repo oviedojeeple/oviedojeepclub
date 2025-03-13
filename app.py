@@ -13,7 +13,7 @@ from square.client import Client
 from urllib.parse import quote
 from event_uploader import upload_event_data
 import msal
-import os, time, requests, json, uuid
+import os, time, requests, json, uuid, base64
 
 # ========= App Initialization and Configuration =========
 app = Flask(__name__)
@@ -447,7 +447,12 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
         current_year=datetime.now().year
     )
 
-    # Build the email message using your email client
+    # Read and base64-encode the image
+    with open('static/images/ojc.png', 'rb') as img_file:
+        img_bytes = img_file.read()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
+    # Build the email message payload with an attachment
     message = {
         "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
         "content": {
@@ -458,7 +463,15 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
             "to": [
                 {"address": recipient_email, "displayName": recipient_name}
             ]
-        }
+        },
+        "attachments": [
+            {
+                "filename": "ojc.png",
+                "contentType": "image/png",
+                "contentBytes": img_base64,
+                "contentId": "ojc_logo"  # This should match the CID in your HTML.
+            }
+        ]
     }
     
     try:
@@ -479,8 +492,13 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
         invitation_link=invitation_link,
         current_year=datetime.now().year
     )
+    
+    # Read and base64-encode the image
+    with open('static/images/ojc.png', 'rb') as img_file:
+        img_bytes = img_file.read()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
-    # Build the email message using your email client
+    # Build the email message payload with an attachment
     message = {
         "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
         "content": {
@@ -491,7 +509,15 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
             "to": [
                 {"address": recipient_email, "displayName": recipient_name}
             ]
-        }
+        },
+        "attachments": [
+            {
+                "filename": "ojc.png",
+                "contentType": "image/png",
+                "contentBytes": img_base64,
+                "contentId": "ojc_logo"  # This should match the CID in your HTML.
+            }
+        ]
     }
     
     try:
@@ -514,7 +540,12 @@ def send_membership_renewal_email(recipient_email, recipient_name):
         current_year=datetime.now().year
     )
 
-    # Build the email message using your email client
+    # Read and base64-encode the image
+    with open('static/images/ojc.png', 'rb') as img_file:
+        img_bytes = img_file.read()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
+    # Build the email message payload with an attachment
     message = {
         "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
         "content": {
@@ -525,7 +556,15 @@ def send_membership_renewal_email(recipient_email, recipient_name):
             "to": [
                 {"address": recipient_email, "displayName": recipient_name}
             ]
-        }
+        },
+        "attachments": [
+            {
+                "filename": "ojc.png",
+                "contentType": "image/png",
+                "contentBytes": img_base64,
+                "contentId": "ojc_logo"  # This should match the CID in your HTML.
+            }
+        ]
     }
     
     try:
@@ -547,7 +586,12 @@ def send_new_membership_email(recipient_email, recipient_name, receipt_url):
         current_year=datetime.now().year
     )
 
-    # Build the email message using your email client
+    # Read and base64-encode the image
+    with open('static/images/ojc.png', 'rb') as img_file:
+        img_bytes = img_file.read()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
+    # Build the email message payload with an attachment
     message = {
         "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
         "content": {
@@ -558,7 +602,15 @@ def send_new_membership_email(recipient_email, recipient_name, receipt_url):
             "to": [
                 {"address": recipient_email, "displayName": recipient_name}
             ]
-        }
+        },
+        "attachments": [
+            {
+                "filename": "ojc.png",
+                "contentType": "image/png",
+                "contentBytes": img_base64,
+                "contentId": "ojc_logo"  # This should match the CID in your HTML.
+            }
+        ]
     }
     
     try:
