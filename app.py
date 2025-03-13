@@ -466,7 +466,7 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
         },
         "attachments": [
             {
-                "filename": "ojc.png",
+                "name": "ojc.png",
                 "contentType": "image/png",
                 "contentBytes": img_base64,
                 "contentId": "ojc_logo"  # This should match the CID in your HTML.
@@ -512,7 +512,7 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
         },
         "attachments": [
             {
-                "filename": "ojc.png",
+                "name": "ojc.png",
                 "contentType": "image/png",
                 "contentBytes": img_base64,
                 "contentId": "ojc_logo"  # This should match the CID in your HTML.
@@ -559,7 +559,7 @@ def send_membership_renewal_email(recipient_email, recipient_name):
         },
         "attachments": [
             {
-                "filename": "ojc.png",
+                "name": "ojc.png",
                 "contentType": "image/png",
                 "contentBytes": img_base64,
                 "contentId": "ojc_logo"  # This should match the CID in your HTML.
@@ -605,7 +605,7 @@ def send_new_membership_email(recipient_email, recipient_name, receipt_url):
         },
         "attachments": [
             {
-                "filename": "ojc.png",
+                "name": "ojc.png",
                 "contentType": "image/png",
                 "contentBytes": img_base64,
                 "contentId": "ojc_logo"  # This should match the CID in your HTML.
