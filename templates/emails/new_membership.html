@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to Oviedo Jeep Club!</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .header { text-align: center; padding: 20px 0; }
+    .content { margin: 20px; }
+    .footer { margin: 20px; font-size: 0.9em; text-align: center; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
+    .logo { max-width: 150px; }
+    a { color: #007BFF; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='images/ojc.png') }}" alt="Oviedo Jeep Club" class="logo">
+  </div>
+  <div class="content">
+    <h1>Welcome to Oviedo Jeep Club!</h1>
+    <p>Hello {{ recipient_name }},</p>
+    <p>Your account has been created successfully.</p>
+    <p>You can view your receipt by clicking the link below:</p>
+    <p><a href="{{ receipt_url }}">View Receipt</a></p>
+    <p>We're excited to have you as part of our community!</p>
+  </div>
+  <div class="footer">
+    <p>If you have any questions, feel free to contact our support team.</p>
+    <p>© {{ current_year }} Oviedo Jeep Club. All rights reserved.</p>
+  </div>
+</body>
+</html>

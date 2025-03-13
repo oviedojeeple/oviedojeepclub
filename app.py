@@ -434,36 +434,35 @@ def sort_events_by_date_desc(events):
 
 def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     print("##### DEBUG ##### In send_disablement_reminder_email()")
-    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
-    try:
-        # Define the login URL for renewal; update this to your actual URL if different.
-        login_url = "https://test.oviedojeepclub.com/login"
-        message = {
-            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
-            "content": {
-                "subject": "Membership Expiration Reminder",
-                "plainText": (
-                    f"Hello {recipient_name},\n\n"
-                    f"Your membership is set to expire in {days_left} day(s).\n\n"
-                    "To renew your membership, please log in to your account using the link below and click on the 'Renew Membership' button:\n"
-                    f"{login_url}\n\n"
-                    "Thank you for being a valued member of the Oviedo Jeep Club."
-                ),
-                "html": (
-                    f"<html><body><h1>Membership Expiration Reminder</h1>"
-                    f"<p>Hello {recipient_name},</p>"
-                    f"<p>Your membership is set to expire in <strong>{days_left}</strong> day(s).</p>"
-                    f"<p>To renew your membership, please <a href='{login_url}'>log in</a> to your account and click on the 'Renew Membership' button.</p>"
-                    f"<p>Thank you for being a valued member of the Oviedo Jeep Club.</p>"
-                    f"</body></html>"
-                )
-            },
-            "recipients": {
-                "to": [
-                    {"address": recipient_email, "displayName": recipient_name}
-                ]
-            }
+
+    # Define the login URL for renewal; update this to your actual URL if different.
+    login_url = url_for('login', _external=True)
+    
+    # Render the HTML email template
+    html_content = render_template(
+        'emails/disablement_reminder.html',
+        recipient_name=recipient_name,
+        login_url=login_url,
+        days_left=days_left,
+        current_year=datetime.now().year
+    )
+
+    # Build the email message using your email client
+    message = {
+        "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+        "content": {
+            "subject": f"Membership Expiration Reminder - {days_left} Days Left",
+            "html": html_content
+        },
+        "recipients": {
+            "to": [
+                {"address": recipient_email, "displayName": recipient_name}
+            ]
         }
+    }
+    
+    try:
+        email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
         poller = email_client.begin_send(message)
         result = poller.result()
         print("##### DEBUG ##### In send_disablement_reminder_email() Email sent! Result:", result)
@@ -472,31 +471,31 @@ def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
     print("##### DEBUG ##### In send_family_invitation_email()")
-    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
-    try:
-        message = {
-            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
-            "content": {
-                "subject": "You're Invited to Join the Oviedo Jeep Club Family Membership",
-                "plainText": (
-                    f"Hello {recipient_name},\n\n"
-                    f"You have been invited to join the Oviedo Jeep Club family membership. "
-                    f"Please click the link below to accept your invitation:\n{invitation_link}"
-                ),
-                "html": (
-                    f"<html><body><h1>Invitation to Join Oviedo Jeep Club</h1>"
-                    f"<p>Hello {recipient_name},</p>"
-                    f"<p>You have been invited to join the Oviedo Jeep Club family membership. "
-                    f"Please click the link below to accept your invitation:</p>"
-                    f"<a href='{invitation_link}'>Accept Invitation</a></body></html>"
-                )
-            },
-            "recipients": {
-                "to": [
-                    {"address": recipient_email, "displayName": recipient_name}
-                ]
-            }
+
+    # Render the HTML email template
+    html_content = render_template(
+        'emails/family_invitation.html',
+        recipient_name=recipient_name,
+        invitation_link=invitation_link,
+        current_year=datetime.now().year
+    )
+
+    # Build the email message using your email client
+    message = {
+        "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+        "content": {
+            "subject": "You're Invited to Join the Oviedo Jeep Club Family Membership",
+            "html": html_content
+        },
+        "recipients": {
+            "to": [
+                {"address": recipient_email, "displayName": recipient_name}
+            ]
         }
+    }
+    
+    try:
+        email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
         poller = email_client.begin_send(message)
         result = poller.result()
         flash("Family member invite sent successfully.", "success")
@@ -507,25 +506,30 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
 
 def send_membership_renewal_email(recipient_email, recipient_name):
     print("##### DEBUG ##### In send_membership_renewal_email()")
-    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
-    try:
-        message = {
-            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
-            "content": {
-                "subject": "Membership Renewal Confirmation",
-                "plainText": "Your membership has been renewed successfully!",
-                "html": (
-                    "<html><body><h1>Membership Renewal Confirmation</h1>"
-                    "<p>Your membership has been renewed successfully!</p>"
-                    "</body></html>"
-                )
-            },
-            "recipients": {
-                "to": [
-                    {"address": recipient_email, "displayName": recipient_name}
-                ]
-            }
+
+    # Render the HTML email template
+    html_content = render_template(
+        'emails/membership_renewal.html',
+        recipient_name=recipient_name,
+        current_year=datetime.now().year
+    )
+
+    # Build the email message using your email client
+    message = {
+        "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+        "content": {
+            "subject": "Membership Renewal Confirmation",
+            "html": html_content
+        },
+        "recipients": {
+            "to": [
+                {"address": recipient_email, "displayName": recipient_name}
+            ]
         }
+    }
+    
+    try:
+        email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
         poller = email_client.begin_send(message)
         result = poller.result()
         print("##### DEBUG ##### In send_membership_renewal_email() Email sent! Result:", result)
@@ -534,31 +538,31 @@ def send_membership_renewal_email(recipient_email, recipient_name):
 
 def send_new_membership_email(recipient_email, recipient_name, receipt_url):
     print("##### DEBUG ##### In send_new_membership_email()")
-    email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
-    try:
-        message = {
-            "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
-            "content": {
-                "subject": "Welcome to Oviedo Jeep Club!",
-                "plainText": (
-                    f"Hello {recipient_name},\n\n"
-                    f"Your account has been created successfully.\n"
-                    f"View your receipt here: {receipt_url}"
-                ),
-                "html": (
-                    f"<html><body><h1>Welcome to Oviedo Jeep Club!</h1>"
-                    f"<p>Hello {recipient_name},</p>"
-                    f"<p>Your account has been created successfully.</p>"
-                    f"<p>View your receipt <a href='{receipt_url}'>here</a>.</p>"
-                    f"</body></html>"
-                )
-            },
-            "recipients": {
-                "to": [
-                    {"address": recipient_email, "displayName": recipient_name}
-                ]
-            }
+
+    # Render the HTML email template
+    html_content = render_template(
+        'emails/new_membership.html',
+        recipient_name=recipient_name,
+        receipt_url=receipt_url,
+        current_year=datetime.now().year
+    )
+
+    # Build the email message using your email client
+    message = {
+        "senderAddress": AZURE_COMM_CONNECTION_STRING_SENDER,
+        "content": {
+            "subject": "Welcome to The Oviedo Jeep Club!",
+            "html": html_content
+        },
+        "recipients": {
+            "to": [
+                {"address": recipient_email, "displayName": recipient_name}
+            ]
         }
+    }
+    
+    try:
+        email_client = EmailClient.from_connection_string(AZURE_COMM_CONNECTION_STRING)
         poller = email_client.begin_send(message)
         result = poller.result()
         print("##### DEBUG ##### In send_new_membership_email() Email sent! Result:", result)
