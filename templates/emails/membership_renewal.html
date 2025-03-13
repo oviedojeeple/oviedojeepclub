@@ -14,16 +14,17 @@
 </head>
 <body>
   <div class="header">
-    <img src="{{ url_for('static', filename='images/ojc.png') }}" alt="Oviedo Jeep Club" class="logo">
+    <img src="cid:ojc_logo" alt="Oviedo Jeep Club">
   </div>
   <div class="content">
     <h1>Membership Renewal Confirmation</h1>
     <p>Hello {{ recipient_name }},</p>
     <p>Your membership has been successfully renewed!</p>
     <p>Thank you for continuing to be a valued member of Oviedo Jeep Club.</p>
+    <p>Don't forgoet to ask us about your renewal ticket.  Show us your profile when you see us!</p>
   </div>
   <div class="footer">
-    <p>For any questions, please visit our website or contact our support team.</p>
+    <p>For any questions, please visit our website or come up to us at one of our events.</p>
     <p>© {{ current_year }} Oviedo Jeep Club. All rights reserved.</p>
   </div>
 </body>
