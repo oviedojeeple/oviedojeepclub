@@ -2,17 +2,20 @@
 
 ## Overview
 
-The Oviedo Jeep Club Web Application is a Flask-based platform designed to manage club memberships and synchronize public events from the club's Facebook Page. It leverages Azure Entra ID B2C for secure user authentication and utilizes the Facebook Graph API to keep the events section current. The application is hosted on Azure App Service, ensuring scalability and reliable performance.
+The Oviedo Jeep Club Web Application is a Flask-based platform designed to manage club memberships, process membership payments, and synchronize public events from the club's Facebook Page. It leverages Azure Entra ID B2C for secure user authentication, utilizes the Facebook Graph API to keep events current, and integrates with Square for payment processing. The application is hosted on Azure App Service for scalability and reliable performance.
 
 ## Features
 
-- **User Authentication**: Secure login using Azure Entra ID B2C, supporting email/password authentication.
-- **Membership Management**: Efficient handling of membership registration, renewals, and cancellations.
-- **Membership Payments Processing**: Use of Square as payment processor for New Membership and Renewals
-- **Facebook Events Synchronization**: Automatic synchronization of public events from the [Oviedo Jeep Club Facebook Page](https://www.facebook.com/oviedojeeple) using the Facebook Graph API.
-- **Email Communications**: Automated email notifications via Azure Email Communication Service.
-- **Secure Sessions**: Enhanced session security with dynamic secret key generation.
-- **Responsive Design**: User-friendly interface compatible with various devices.
+- **User Authentication:** Secure login using Azure Entra ID B2C with email/password authentication.
+- **Membership Management:** Efficient handling of membership registration, renewals, cancellations, and data deletion requests.
+- **Membership Payments Processing:** Integration with Square for processing new memberships and renewals.
+- **Facebook Events Synchronization:** Automatic synchronization of public events from the [Oviedo Jeep Club Facebook Page](https://www.facebook.com/oviedojeeple) using the Facebook Graph API.
+- **Event Reminder Notifications:**  
+  - Automated email reminders are now sent to all active members whose membership expiration date (stored as a timestamp) is prior to the event’s start date.  
+  - Reminders are scheduled to be sent 15, 7, or 1 day(s) before the event begins using APScheduler.
+- **Email Communications:** Automated emails are sent via Azure Communication Services. Email types include disablement reminders, family invitation emails, membership renewal confirmations, welcome emails, and now event reminders.
+- **Secure Sessions:** Enhanced session security with dynamic secret key generation.
+- **Responsive Design:** A user-friendly interface that works well on various devices.
 
 ## Table of Contents
 
@@ -24,11 +27,14 @@ The Oviedo Jeep Club Web Application is a Flask-based platform designed to manag
 - [Setup and Installation](#setup-and-installation)
 - [Usage](#usage)
 - [Development](#development)
+- [Deployment](#deployment)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
 
 ## Repository Structure
+
+
 
 ```
 oviedojeepclub/
@@ -42,7 +48,12 @@ oviedojeepclub/
 ├── templates/
 │   ├── base.html
 │   ├── index.html
-│   └── ...
+│   └── emails/
+│       ├── disablement_reminder.html
+│       ├── event_reminder.html
+│       ├── family_invitation.html
+│       ├── membership_renewal.html
+│       └── new_membership.html
 ├── utilities/
 │   └── facebook_events.py
 ├── .gitignore
@@ -55,77 +66,58 @@ oviedojeepclub/
 ```
 Below is a breakdown of the repository’s key files and directories:
 
+
 ### Root-Level Files
 
 - **startup.sh**  
-  A shell script designed to help you initialize and run the web application. It may set up environment variables, start the Flask server, or perform other startup tasks.  
+  A shell script to initialize and run the web application (e.g., setting environment variables and starting the Flask server).  
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/startup.sh)
 
 - **requirements.txt**  
-  Contains the list of Python dependencies required to run the application (e.g., Flask, and any other libraries used). Install these with pip.  
+  Contains the Python dependencies required for the application (e.g., Flask, APScheduler, Azure SDKs).  
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/requirements.txt)
 
 - **app.py**  
-  The main application file that defines the Flask app. It contains the route definitions, controller logic, and functions to render the templates. This file is the entry point of the application when running locally.  
+  The main application file that defines the Flask app, route definitions, business logic, and email communications—including the new event reminder functionality.  
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/app.py)
 
 - **LICENSE**  
-  The licensing file for the project. This file details the terms under which the software is distributed.  
+  The licensing file for the project.  
   [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/LICENSE)
 
 ### Templates
 
-All HTML templates are stored in the `templates` directory. These files are rendered by the Flask app to create dynamic web pages.
-
-- **templates/index.html**  
-  The landing page of the application. It typically contains the main content, navigation links, and embedded resources.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/templates/index.html)
-
-- **templates/delete_data.html**  
-  A dedicated page to manage data deletion requests. This page might include instructions or forms to help users remove their data from the system.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/templates/delete_data.html)
-
-- **templates/privacy.html**  
-  Provides details about the privacy policies of the club, informing users how their data is used and protected.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/templates/privacy.html)
+HTML templates are stored in the `templates` directory. In addition to the standard pages (index, privacy, delete data), there is now a dedicated folder for email templates:
+  
+- **templates/emails/event_reminder.html**  
+  The new email template that notifies members about upcoming events. This template uses variables such as `{{ event_name }}`, `{{ recipient_name }}`, `{{ days_left }}`, and `{{ current_year }}`.
 
 ### Static Assets
 
-Static files are served from the `static` directory. This includes styling, images, and client-side JavaScript.
+Static files include CSS, images, and JavaScript:
 
-- **static/style.css**  
-  The main stylesheet for the application. This file defines the layout, typography, color schemes, and responsive behavior of the website.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/style.css)
-
-- **static/favicon.ico**  
-  The favicon for the website, which appears in the browser tab.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/favicon.ico)
-
+- **static/css/style.css**  
+  Main stylesheet that defines the layout and responsive design.
+  
 - **static/images/ojc.png**  
-  The Oviedo Jeep Club logo.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/images/ojc.png)
-
+  The Oviedo Jeep Club logo used across the site and in email communications.
+  
 - **static/images/GoInkit.png**  
-  Our partner GoInkIt's logo.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/images/GoInkit.png)
-
-- **static/scripts/profile.js**  
-  A JavaScript file that manages profile-related interactions, such as updating user details or handling profile events.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/scripts/profile.js)
-
-- **static/scripts/payment.js**  
-  This script handles payment-related functionality, likely including form validations, payment gateway integrations, or transaction processing.  
-  [View File](https://github.com/oviedojeeple/oviedojeepclub/blob/main/static/scripts/payment.js)
+  Logo for the partner GoInkit.
+  
+- **static/js/profile.js** and **static/js/payment.js**  
+  JavaScript files that handle profile interactions and payment processing, respectively.
 
 ## Setup and Installation
 
 ### Prerequisites
 
-- **Python 3.x:** Ensure Python is installed on your system.
-- **Pip:** The Python package installer.
-- **Azure Entra ID B2C tenant configured
-- **Facebook Developer account with access to the Graph API
-- **Square Developer account with access to the Payments API
+- **Python 3.x:** Ensure that Python is installed.
+- **Pip:** Python package installer.
+- **Azure Entra ID B2C Tenant:** For user authentication.
+- **Facebook Developer Account:** With access to the Graph API.
+- **Square Developer Account:** For payment processing.
+- **Azure Communication Services:** For email communications.
 
 ### Installation Steps
 
@@ -166,8 +158,13 @@ Static files are served from the `static` directory. This includes styling, imag
    export AZURE_CLIENT_ID="your-client-id"
    export AZURE_CLIENT_SECRET="your-client-secret"
    export AZURE_TENANT_ID="your-tenant-id"
+   export AZURE_COMM_CONNECTION_STRING="your-azure-communication-connection-string"
+   export AZURE_COMM_CONNECTION_STRING_SENDER="your-email-sender-address"
    export FACEBOOK_PAGE_ID="your-facebook-page-id"
    export FACEBOOK_ACCESS_TOKEN="your-facebook-access-token"
+   export SQUARE_ACCESS_TOKEN="your-square-access-token"
+   export SQUARE_APPLICATION_ID="your-square-application-id"
+
    ```
   
    Obtain the `FACEBOOK_ACCESS_TOKEN` from the [Facebook Graph API documentation](https://developers.facebook.com/docs/graph-api/get-started/).
@@ -265,5 +262,5 @@ Licensed under the MIT License. See the [LICENSE](LICENSE) file.
 
 For inquiries, visit [Oviedo Jeep Club](https://oviedojeepclub.com) or their [Facebook Page](https://www.facebook.com/oviedojeeple).
 
-Happy Jeeping! 🛞🌲 o|||||||o
+Happy Jeeping! 🌲 o|||||||o 🌲
 
