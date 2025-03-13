@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Event Reminder: {{ event_name }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .header { text-align: center; padding: 20px 0; }
+    .content { margin: 20px; }
+    .footer { margin: 20px; font-size: 0.9em; text-align: center; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
+    .logo { max-width: 150px; }
+    a { color: #007BFF; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="cid:ojc_logo" alt="Oviedo Jeep Club" style="width:50%;">
+  </div>
+  <div class="content">
+    <h1>Event Reminder: {{ event_name }}</h1>
+    <p>Hello {{ recipient_name }},</p>
+    <p>This is a friendly reminder that the event <strong>{{ event_name }}</strong> is coming up in <strong>{{ days_left }}</strong> day(s).</p>
+    <p>We hope to see you there for an exciting and engaging experience!</p>
+    <p>For more details about the event, please visit our website or contact us directly.</p>
+  </div>
+  <div class="footer">
+    <p>Stay connected with us for the latest updates and exclusive offers!</p>
+    <p>© {{ current_year }} Oviedo Jeep Club. All rights reserved.</p>
+  </div>
+</body>
+</html>
