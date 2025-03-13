@@ -531,7 +531,7 @@ def send_family_invitation_email(recipient_email, recipient_name, invitation_lin
         print("Error sending family invitation email:", e)
 
 def send_membership_renewal_email(recipient_email, recipient_name):
-    print("##### DEBUG ##### In send_membership_renewal_email()")
+    print(f'##### DEBUG ##### In send_membership_renewal_email with {recipient_email} and {recipient_name}')
 
     # Render the HTML email template
     html_content = render_template(
