@@ -1403,8 +1403,8 @@ def after_request(response):
 
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
-scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=17, minute=30, id="expiration_check")
-scheduler.add_job(func=check_event_reminders, trigger="cron", hour=17, minute=0, id="event_reminder")
+scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=22, minute=00, id="expiration_check")
+scheduler.add_job(func=check_event_reminders, trigger="cron", hour=21, minute=45, id="event_reminder")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
