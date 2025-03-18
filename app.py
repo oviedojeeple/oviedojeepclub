@@ -184,7 +184,7 @@ def check_event_reminders():
         # Retrieve future events from blob storage
         events = get_events_from_blob(future_only=True)
         if not events:
-            print("No events available for reminders.")
+            print("##### DEBUG ##### In check_event_reminders() No events available for reminders.")
             return
         today = datetime.today().date()
         # Retrieve all active members (users)
@@ -200,9 +200,10 @@ def check_event_reminders():
             days_left = (event_date - today).days
             # Check if the event is exactly 15, 7, or 1 day away
             if days_left in [15, 7, 1]:
-                print(f"Event '{event.get('name')}' is starting in {days_left} days.")
+                print(f"##### DEBUG ##### In check_event_reminders() Event '{event.get('name')}' is starting in {days_left} days.")
                 # Loop through active members and only send an email if the event occurs before the user's membership expiration date.
                 for user in users:
+                    print("##### DEBUG ##### In check_event_reminders() Evaluating user: ", user)
                     expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
                     if expiration_timestamp:
                         if expiration_timestamp > 1e10:
@@ -213,7 +214,7 @@ def check_event_reminders():
                             display_name = user.get('displayName', 'Member')
                             try:
                                 send_event_reminder_email(email, display_name, event, days_left)
-                                print("Sent event reminder email to:", email)
+                                print("##### DEBUG ##### In check_event_reminders() Sent event reminder email to:", email)
                             except Exception as e:
                                 print("Error sending event reminder email to", email, ":", e)
 
