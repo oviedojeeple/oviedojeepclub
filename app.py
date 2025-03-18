@@ -199,7 +199,7 @@ def check_event_reminders():
         # Check if the event is exactly 15, 7, or 1 day away
         if days_left in [15, 7, 1]:
             print(f"Event '{event.get('name')}' is starting in {days_left} days.")
-            # Loop through active members and only email those whose membership expiration is prior to the event date.
+            # Loop through active members and only email those if the event occurs before their membership expiration date.
             for user in users:
                 expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
                 if expiration_timestamp:
@@ -207,8 +207,8 @@ def check_event_reminders():
                     if expiration_timestamp > 1e10:
                         expiration_timestamp = expiration_timestamp / 1000
                     user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
-                    # Only send email if the user's expiration date is before the event date.
-                    if user_expiration_date < event_date:
+                    # Only send email if the event date is before the user's expiration date.
+                    if event_date < user_expiration_date:
                         email = user.get('mailNickname', '').replace('_at_', '@')
                         display_name = user.get('displayName', 'Member')
                         try:
