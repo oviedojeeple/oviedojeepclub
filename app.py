@@ -179,44 +179,43 @@ def acquire_lock():
 
 def check_event_reminders():
     print("##### DEBUG ##### In check_event_reminders()")
-    # Retrieve future events from blob storage
-    events = get_events_from_blob(future_only=True)
-    if not events:
-        print("No events available for reminders.")
-        return
-    today = datetime.today().date()
-    # Retrieve all active members (users)
-    users = get_all_users()
-    
-    for event in events:
-        try:
-            event_date = parse_date(event.get("start_time")).date()
-        except Exception as e:
-            print("Error parsing event date for event:", event.get("name"), e)
-            continue
+    # Push an application context for all operations needing it
+    with app.app_context():
+        # Retrieve future events from blob storage
+        events = get_events_from_blob(future_only=True)
+        if not events:
+            print("No events available for reminders.")
+            return
+        today = datetime.today().date()
+        # Retrieve all active members (users)
+        users = get_all_users()
         
-        days_left = (event_date - today).days
-        # Check if the event is exactly 15, 7, or 1 day away
-        if days_left in [15, 7, 1]:
-            print(f"Event '{event.get('name')}' is starting in {days_left} days.")
-            # Loop through active members and only email those if the event occurs before their membership expiration date.
-            for user in users:
-                expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
-                if expiration_timestamp:
-                    # Convert timestamp if in milliseconds
-                    if expiration_timestamp > 1e10:
-                        expiration_timestamp = expiration_timestamp / 1000
-                    user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
-                    # Only send email if the event date is before the user's expiration date.
-                    if event_date < user_expiration_date:
-                        email = user.get('mailNickname', '').replace('_at_', '@')
-                        display_name = user.get('displayName', 'Member')
-                        try:
-                            send_event_reminder_email(email, display_name, event, days_left)
-                            print("Sent event reminder email to:", email)
-                        except Exception as e:
-                            print("Error sending event reminder email to", email, ":", e)
-
+        for event in events:
+            try:
+                event_date = parse_date(event.get("start_time")).date()
+            except Exception as e:
+                print("Error parsing event date for event:", event.get("name"), e)
+                continue
+            
+            days_left = (event_date - today).days
+            # Check if the event is exactly 15, 7, or 1 day away
+            if days_left in [15, 7, 1]:
+                print(f"Event '{event.get('name')}' is starting in {days_left} days.")
+                # Loop through active members and only send an email if the event occurs before the user's membership expiration date.
+                for user in users:
+                    expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+                    if expiration_timestamp:
+                        if expiration_timestamp > 1e10:
+                            expiration_timestamp = expiration_timestamp / 1000
+                        user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
+                        if event_date < user_expiration_date:
+                            email = user.get('mailNickname', '').replace('_at_', '@')
+                            display_name = user.get('displayName', 'Member')
+                            try:
+                                send_event_reminder_email(email, display_name, event, days_left)
+                                print("Sent event reminder email to:", email)
+                            except Exception as e:
+                                print("Error sending event reminder email to", email, ":", e)
 
 def compute_expiration_date():
     print("##### DEBUG ##### In compute_expiration_date()")
@@ -756,31 +755,33 @@ def check_membership_expiration():
         return
     try:
         print("##### DEBUG ##### In check_membership_expiration() - begin processing...")
-        today = datetime.today().date()
-        users = get_all_users()
-        processed_ids = set()  # To avoid duplicates within one run.
-        for user in users:
-            user_id = user.get("id")
-            if user_id in processed_ids:
-                continue
-            processed_ids.add(user_id)
-            print("Processing user:", user)
-            expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
-            if expiration_timestamp:
-                if expiration_timestamp > 1e10:
-                    expiration_timestamp = expiration_timestamp / 1000
-                expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
-                days_left = (expiration_date - today).days
-                if days_left in [90, 60, 30, 15, 1]:
-                    email = user.get('mailNickname', '').replace('_at_', '@')
-                    print("About to send email to:", email)
-                    try:
-                        send_disablement_reminder_email(email, user.get('displayName', 'Member'), days_left)
-                        print("Email sent to:", email)
-                    except Exception as e:
-                        print("Error sending email to", email, ":", e)
-        end_time = datetime.utcnow().isoformat()
-        print(f"##### DEBUG ##### In check_membership_expiration() [{end_time}] [PID {pid}] expiration_check job FINISHED. Run ID: {run_id}")
+        # Push an application context so that render_template and flash work properly
+        with app.app_context():
+            today = datetime.today().date()
+            users = get_all_users()
+            processed_ids = set()  # To avoid duplicates within one run.
+            for user in users:
+                user_id = user.get("id")
+                if user_id in processed_ids:
+                    continue
+                processed_ids.add(user_id)
+                print("Processing user:", user)
+                expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+                if expiration_timestamp:
+                    if expiration_timestamp > 1e10:
+                        expiration_timestamp = expiration_timestamp / 1000
+                    expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
+                    days_left = (expiration_date - today).days
+                    if days_left in [90, 60, 30, 15, 1]:
+                        email = user.get('mailNickname', '').replace('_at_', '@')
+                        print("About to send email to:", email)
+                        try:
+                            send_disablement_reminder_email(email, user.get('displayName', 'Member'), days_left)
+                            print("Email sent to:", email)
+                        except Exception as e:
+                            print("Error sending email to", email, ":", e)
+            end_time = datetime.utcnow().isoformat()
+            print(f"##### DEBUG ##### In check_membership_expiration() [{end_time}] [PID {pid}] expiration_check job FINISHED. Run ID: {run_id}")
     finally:
         release_lock(lease)
 
@@ -1404,7 +1405,7 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=22, minute=00, id="expiration_check")
-scheduler.add_job(func=check_event_reminders, trigger="cron", hour=21, minute=45, id="event_reminder")
+scheduler.add_job(func=check_event_reminders, trigger="cron", hour=22, minute=10, id="event_reminder")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
