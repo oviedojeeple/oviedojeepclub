@@ -179,15 +179,13 @@ def acquire_lock():
 
 def check_event_reminders():
     print("##### DEBUG ##### In check_event_reminders()")
-    # Push an application context for all operations needing it
-    with app.app_context():
-        # Retrieve future events from blob storage
+    # Use a test request context to provide both app and request contexts
+    with app.test_request_context():
         events = get_events_from_blob(future_only=True)
         if not events:
-            print("##### DEBUG ##### In check_event_reminders() No events available for reminders.")
+            print("No events available for reminders.")
             return
         today = datetime.today().date()
-        # Retrieve all active members (users)
         users = get_all_users()
         
         for event in events:
@@ -201,11 +199,12 @@ def check_event_reminders():
             # Check if the event is exactly 15, 7, or 1 day away
             if days_left in [15, 7, 1]:
                 print(f"##### DEBUG ##### In check_event_reminders() Event '{event.get('name')}' is starting in {days_left} days.")
-                # Loop through active members and only send an email if the event occurs before the user's membership expiration date.
+                # Loop through active members and send an email if the event occurs before the user's membership expiration date.
                 for user in users:
-                    print("##### DEBUG ##### In check_event_reminders() Evaluating user: ", user)
+                    print("##### DEBUG ##### In check_event_reminders() Evaluation User: ", user)
                     expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
                     if expiration_timestamp:
+                        # Convert timestamp if in milliseconds
                         if expiration_timestamp > 1e10:
                             expiration_timestamp = expiration_timestamp / 1000
                         user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
@@ -756,8 +755,8 @@ def check_membership_expiration():
         return
     try:
         print("##### DEBUG ##### In check_membership_expiration() - begin processing...")
-        # Push an application context so that render_template and flash work properly
-        with app.app_context():
+        # Use a test request context so that functions like flash and render_template work properly.
+        with app.test_request_context():
             today = datetime.today().date()
             users = get_all_users()
             processed_ids = set()  # To avoid duplicates within one run.
@@ -1406,7 +1405,7 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=10, minute=00, id="expiration_check")
-scheduler.add_job(func=check_event_reminders, trigger="cron", hour=00, minute=50, id="event_reminder")
+scheduler.add_job(func=check_event_reminders, trigger="cron", hour=01, minute=10, id="event_reminder")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
