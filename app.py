@@ -179,43 +179,60 @@ def acquire_lock():
 
 def check_event_reminders():
     print("##### DEBUG ##### In check_event_reminders()")
-    # Use a test request context to provide both app and request contexts
-    with app.test_request_context():
-        events = get_events_from_blob(future_only=True)
-        if not events:
-            print("No events available for reminders.")
-            return
-        today = datetime.today().date()
-        users = get_all_users()
-        
-        for event in events:
-            try:
-                event_date = parse_date(event.get("start_time")).date()
-            except Exception as e:
-                print("Error parsing event date for event:", event.get("name"), e)
-                continue
-            
-            days_left = (event_date - today).days
-            # Check if the event is exactly 15, 7, or 1 day away
-            if days_left in [15, 8, 1]:
-                print(f"##### DEBUG ##### In check_event_reminders() Event '{event.get('name')}' is starting in {days_left} days.")
-                # Loop through active members and send an email if the event occurs before the user's membership expiration date.
-                for user in users:
-                    print("##### DEBUG ##### In check_event_reminders() Evaluation User: ", user)
-                    expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
-                    if expiration_timestamp:
-                        # Convert timestamp if in milliseconds
-                        if expiration_timestamp > 1e10:
-                            expiration_timestamp = expiration_timestamp / 1000
-                        user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
-                        if event_date < user_expiration_date:
-                            email = user.get('mailNickname', '').replace('_at_', '@')
-                            display_name = user.get('displayName', 'Member')
-                            try:
-                                send_event_reminder_email(email, display_name, event, days_left)
-                                print("##### DEBUG ##### In check_event_reminders() Sent event reminder email to:", email)
-                            except Exception as e:
-                                print("Error sending event reminder email to", email, ":", e)
+    # Acquire the lock so that only one instance runs at a time.
+    lease = acquire_lock()
+    if not lease:
+        print("##### DEBUG ##### In check_event_reminders() - Another instance is processing; skipping this run.")
+        return
+    try:
+        # Use a test request context to provide both app and request contexts.
+        with app.test_request_context():
+            events = get_events_from_blob(future_only=True)
+            if not events:
+                print("No events available for reminders.")
+                return
+            today = datetime.today().date()
+            users = get_all_users()
+            # Use a dictionary to track per event the user IDs that have been processed
+            processed = {}  # key: event_id, value: set of user_ids
+            for event in events:
+                try:
+                    event_date = parse_date(event.get("start_time")).date()
+                except Exception as e:
+                    print("Error parsing event date for event:", event.get("name"), e)
+                    continue
+
+                days_left = (event_date - today).days
+                # Check if the event is exactly on one of the specified days.
+                # Update this list as needed.
+                if days_left in [15, 8, 1]:
+                    event_id = event.get("id")
+                    if event_id not in processed:
+                        processed[event_id] = set()
+
+                    print(f"##### DEBUG ##### In check_event_reminders() Event '{event.get('name')}' is starting in {days_left} days.")
+                    for user in users:
+                        user_id = user.get("id")
+                        if user_id in processed[event_id]:
+                            continue  # Skip if already processed for this event.
+                        expiration_timestamp = user.get("extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate")
+                        if expiration_timestamp:
+                            # Convert timestamp if in milliseconds
+                            if expiration_timestamp > 1e10:
+                                expiration_timestamp = expiration_timestamp / 1000
+                            user_expiration_date = datetime.fromtimestamp(expiration_timestamp).date()
+                            # Only send email if the event occurs before the user's membership expiration date.
+                            if event_date < user_expiration_date:
+                                email = user.get('mailNickname', '').replace('_at_', '@')
+                                display_name = user.get('displayName', 'Member')
+                                try:
+                                    send_event_reminder_email(email, display_name, event, days_left)
+                                    print("##### DEBUG ##### In check_event_reminders() Sent event reminder email to:", email)
+                                    processed[event_id].add(user_id)
+                                except Exception as e:
+                                    print("Error sending event reminder email to", email, ":", e)
+    finally:
+        release_lock(lease)
 
 def compute_expiration_date():
     print("##### DEBUG ##### In compute_expiration_date()")
@@ -1405,7 +1422,7 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=6, minute=30, id="expiration_check")
-scheduler.add_job(func=check_event_reminders, trigger="cron", hour=1, minute=5, id="event_reminder")
+scheduler.add_job(func=check_event_reminders, trigger="cron", hour=1, minute=37, id="event_reminder")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
