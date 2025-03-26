@@ -197,7 +197,7 @@ def check_event_reminders():
             
             days_left = (event_date - today).days
             # Check if the event is exactly 15, 7, or 1 day away
-            if days_left in [15, 7, 1]:
+            if days_left in [15, 9, 8, 7, 1]:
                 print(f"##### DEBUG ##### In check_event_reminders() Event '{event.get('name')}' is starting in {days_left} days.")
                 # Loop through active members and send an email if the event occurs before the user's membership expiration date.
                 for user in users:
@@ -1405,7 +1405,7 @@ def after_request(response):
 # ========= Scheduler Initialization =========
 scheduler = APScheduler()
 scheduler.add_job(func=check_membership_expiration, trigger="cron", hour=6, minute=30, id="expiration_check")
-scheduler.add_job(func=check_event_reminders, trigger="cron", hour=6, minute=00, id="event_reminder")
+scheduler.add_job(func=check_event_reminders, trigger="cron", hour=0, minute=20, id="event_reminder")
 scheduler.start()
 jobs = scheduler.get_jobs()
 print(f"##### DEBUG ##### Initialized scheduler - Scheduler jobs count: {len(jobs)}; jobs: {jobs}")
