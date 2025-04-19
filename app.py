@@ -7,7 +7,7 @@ from flask_apscheduler import APScheduler
 from datetime import datetime
 
 import config
-from auth import auth_bp
+from auth import auth_bp, login_manager
 from invitations import invitations_bp
 from events import events_bp, check_event_reminders
 from payments import payments_bp
@@ -25,6 +25,9 @@ def create_app():
     CORS(app)
     # Setup Flask-RESTful API (if any resources added)
     Api(app)
+    # Initialize Flask-Login manager
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
 
     # Register blueprints
     app.register_blueprint(auth_bp)
