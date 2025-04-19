@@ -6,7 +6,9 @@ from datetime import datetime as _dt
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from azure_services import invitations_table_client
-from user_services import create_b2c_user
+from user_services import create_b2c_user, _acquire_graph_api_token
+import requests
+from urllib.parse import quote
 from emails import send_family_invitation_email
 
 invitations_bp = Blueprint('invitations', __name__)
@@ -72,3 +74,25 @@ def delete_data():
         flash('Your data deletion request has been received.', 'success')
         return render_template('delete_data.html', message='Your data deletion request has been received.', message_type='success')
     return render_template('delete_data.html')
+ 
+@invitations_bp.route('/family-members')
+@login_required
+def family_members():
+    """
+    Return family members (B2C users) associated with the current user's membership number.
+    """
+    # Acquire Graph API token
+    token = _acquire_graph_api_token()
+    if not token:
+        return jsonify({'error': 'Unable to acquire Graph API token'}), 500
+    # Build Graph API request to filter users by MembershipNumber extension attribute
+    membership_number = current_user.membership_number
+    filter_str = f"extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}'"
+    # URL-encode the filter string
+    encoded_filter = quote(filter_str)
+    url = f"https://graph.microsoft.com/v1.0/users?$filter={encoded_filter}&$select=displayName,mailNickname"
+    resp = requests.get(url, headers={'Authorization': f'Bearer {token}'})
+    if resp.status_code != 200:
+        return jsonify({'error': resp.text}), resp.status_code
+    members = resp.json().get('value', [])
+    return jsonify(members)
