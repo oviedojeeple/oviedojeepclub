@@ -66,7 +66,8 @@ def _acquire_token_by_auth_code_flow(flow, args):
     return None
 
 def _acquire_graph_api_token():
-    authority_url = Config.AZURE_AUTHORITY
+    # Use AAD authority (tenant endpoint) for client credential flow to call Graph API
+    authority_url = Config.AAD_AUTHORITY
     app_msal = msal.ConfidentialClientApplication(
         Config.CLIENT_ID,
         client_credential=Config.CLIENT_SECRET,

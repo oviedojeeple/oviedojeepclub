@@ -22,10 +22,13 @@ class Config:
     TENANT_ID = _env("AZURE_TENANT_ID")
     REDIRECT_URI = _env("AZURE_REDIRECT_URI")
     AZURE_POLICY = _env("AZURE_POLICY")
+    # B2C authority (includes policy)
     AZURE_AUTHORITY = _env("AZURE_AUTHORITY")
     AUTHORITY = f"{AZURE_AUTHORITY}/{AZURE_POLICY}"
     LOGIN_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
     TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
+    # AAD authority for client credentials (e.g., Graph API)
+    AAD_AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 
     # Square
     SQUARE_ACCESS_TOKEN = _env("SQUARE_ACCESS_TOKEN")
