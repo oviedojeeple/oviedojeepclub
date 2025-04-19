@@ -90,9 +90,21 @@ def family_members():
     filter_str = f"extension_b32ce28f40e2412fb56abae06a1ac8ab_MembershipNumber eq '{membership_number}'"
     # URL-encode the filter string
     encoded_filter = quote(filter_str)
-    url = f"https://graph.microsoft.com/v1.0/users?$filter={encoded_filter}&$select=displayName,mailNickname"
+    # Include userPrincipalName in select to filter out the current user
+    select_fields = 'displayName,mailNickname,userPrincipalName'
+    url = (
+        f"https://graph.microsoft.com/v1.0/users"
+        f"?$filter={encoded_filter}"
+        f"&$select={select_fields}"
+    )
     resp = requests.get(url, headers={'Authorization': f'Bearer {token}'})
     if resp.status_code != 200:
         return jsonify({'error': resp.text}), resp.status_code
     members = resp.json().get('value', [])
-    return jsonify(members)
+    # Filter out the signed-in user (membership number matches but not a family member)
+    current_user_upn = (
+        f"{current_user.email.replace('@', '_at_')}@oviedojeepclub.onmicrosoft.com"
+    )
+    filtered = [m for m in members if m.get('userPrincipalName') != current_user_upn]
+    # Return remaining family members
+    return jsonify(filtered)
