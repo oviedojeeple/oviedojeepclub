@@ -108,3 +108,32 @@ def create_b2c_user(email, display_name, password,
     if upd.status_code not in (200, 204):
         raise RuntimeError(f"Error updating custom attributes: {upd.text}")
     return created
+  
+def check_membership_expiration():
+    """
+    Scheduled job: send membership expiration reminder emails.
+    Fetches all users, computes days until expiration, and emails them when
+    their membership expires in 15, 8, or 1 days.
+    """
+    from datetime import datetime as _dt
+    from emails import send_disablement_reminder_email
+    # Get all users with expiration data
+    users = get_all_users()
+    today = _dt.utcnow().date()
+    for user in users:
+        # Extract raw expiration timestamp
+        exp_raw = user.get('extension_b32ce28f40e2412fb56abae06a1ac8ab_MemberExpirationDate')
+        if not exp_raw:
+            continue
+        # Normalize to seconds
+        ts = exp_raw / 1000 if exp_raw > 1e10 else exp_raw
+        try:
+            exp_date = _dt.fromtimestamp(ts).date()
+        except Exception:
+            continue
+        days_left = (exp_date - today).days
+        if days_left in (15, 8, 1):
+            # Prepare recipient info
+            recipient = user.get('mailNickname', '').replace('_at_', '@')
+            name = user.get('displayName', 'Member')
+            send_disablement_reminder_email(recipient, name, days_left)
