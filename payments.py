@@ -31,10 +31,10 @@ def pay():
     password = data.get('password')
     if not nonce or not email or not name or not password:
         flash('Missing payment or user info.', 'danger')
-        return redirect(url_for('join'))
+        return redirect(url_for('payments.join'))
     if session.get('user_data') and email == session['user_data'].get('email'):
         flash('Email already used.', 'danger')
-        return redirect(url_for('join'))
+        return redirect(url_for('payments.join'))
     body = {
         'source_id': nonce,
         'amount_money': {'amount': 5000, 'currency': 'USD'},
@@ -43,7 +43,7 @@ def pay():
     result = square_client.payments.create_payment(body)
     if not result.is_success():
         flash('Payment failed.', 'danger')
-        return redirect(url_for('join'))
+        return redirect(url_for('payments.join'))
     receipt = result.body.get('payment', {}).get('receipt_url')
     membership_number, join_date, expiration_date = create_membership_details()
     try:
@@ -52,7 +52,7 @@ def pay():
         flash('Account created successfully. Please sign in.', 'success')
     except Exception as e:
         flash(f'Error creating account: {e}', 'danger')
-    return redirect(url_for('join'))
+    return redirect(url_for('payments.join'))
 
 @payments_bp.route('/renew-membership', methods=['POST'])
 @login_required
