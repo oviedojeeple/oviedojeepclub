@@ -120,30 +120,33 @@ def update_b2c_user_email(user_id, new_email):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    # Fetch existing identities and other mail properties
-    url = f"https://graph.microsoft.com/v1.0/users/{user_id}?$select=identities,mailNickname,otherMails"
-    resp = requests.get(url, headers=headers)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Error fetching user for email update: {resp.text}")
-    user_obj = resp.json()
-    identities = user_obj.get('identities', [])
-    # Update the email identity
-    for ident in identities:
-        if ident.get('signInType') == 'emailAddress':
-            ident['issuerAssignedId'] = new_email
     # Compute new mailNickname and UPN
     mail_nickname = new_email.replace('@', '_at_')
     user_principal_name = f"{mail_nickname}@oviedojeepclub.onmicrosoft.com"
-    patch_body = {
-        'identities': identities,
-        'mailNickname': mail_nickname,
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    # Step 1: update core properties (userPrincipalName, mailNickname, otherMails)
+    patch1 = {
         'userPrincipalName': user_principal_name,
+        'mailNickname': mail_nickname,
         'otherMails': [new_email]
     }
-    patch_url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
-    patch_resp = requests.patch(patch_url, headers=headers, json=patch_body)
-    if patch_resp.status_code not in (200, 204):
-        raise RuntimeError(f"Error updating user email: {patch_resp.text}")
+    resp1 = requests.patch(url, headers=headers, json=patch1)
+    if resp1.status_code not in (200, 204):
+        raise RuntimeError(f"Error updating userCore properties: {resp1.text}")
+    # Step 2: fetch and update identities separately
+    resp2 = requests.get(f"{url}?$select=identities", headers=headers)
+    if resp2.status_code != 200:
+        raise RuntimeError(f"Error fetching identities: {resp2.text}")
+    identities = resp2.json().get('identities', [])
+    updated_idents = []
+    for ident in identities:
+        if ident.get('signInType') == 'emailAddress':
+            ident['issuerAssignedId'] = new_email
+        updated_idents.append(ident)
+    patch2 = {'identities': updated_idents}
+    resp3 = requests.patch(url, headers=headers, json=patch2)
+    if resp3.status_code not in (200, 204):
+        raise RuntimeError(f"Error updating identities: {resp3.text}")
   
 def check_membership_expiration():
     """
