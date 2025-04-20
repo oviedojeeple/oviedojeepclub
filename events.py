@@ -5,7 +5,7 @@ import uuid
 import json
 import requests
 from datetime import datetime
-from flask import Blueprint, jsonify, request, flash, redirect, url_for, session
+from flask import Blueprint, jsonify, request, flash, redirect, url_for, session, Response
 from flask_login import login_required, current_user
 from config import Config
 from azure_services import blob_service_client
@@ -64,11 +64,15 @@ def create_event():
         # Handle cover image upload
         cover_file = request.files.get('cover_image')
         if cover_file:
+            # Upload cover image to Azure Blob Storage
             blob_client = blob_service_client.get_blob_client(
                 container='event-images', blob=cover_file.filename
             )
             blob_client.upload_blob(cover_file, overwrite=True)
-            event['cover']['source'] = blob_client.url
+            # Use internal route to proxy the image (handles private containers)
+            event['cover']['source'] = url_for(
+                'events.event_image', filename=cover_file.filename
+            )
         else:
             event['cover']['source'] = data.get('cover_source', '').strip()
         # Append and upload
@@ -144,6 +148,25 @@ def facebook_callback():
     success, msg = upload_events_to_blob(sort_events_by_date_desc(combined))
     flash('Facebook events synced' if success else msg, 'success' if success else 'danger')
     return redirect(url_for('index', section='events'))
+
+@events_bp.route('/event-image/<path:filename>')
+@login_required
+def event_image(filename):
+    """
+    Proxy and serve event cover images from Azure Blob Storage.
+    """
+    try:
+        blob_client = blob_service_client.get_blob_client(
+            container='event-images', blob=filename
+        )
+        data = blob_client.download_blob().readall()
+        props = blob_client.get_blob_properties()
+        content_type = (
+            props.content_settings.content_type or 'application/octet-stream'
+        )
+        return Response(data, mimetype=content_type)
+    except Exception:
+        return ('', 404)
 
 def check_event_reminders():
     """
