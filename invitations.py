@@ -76,19 +76,16 @@ def invite_family():
         logger.info(f"Invitation entity upserted with token {token} for {family_email}")
         # Build acceptance link
         link = url_for('invitations.accept_invitation', token=token, _external=True)
-        # Send invitation email asynchronously
-        import threading
-
-        def _send():
-            logger.info(f"_send: sending family invitation email to {family_email} with link {link}")
-            try:
-                send_family_invitation_email(family_email, family_name, link)
-                logger.info(f"Family invitation email sent successfully to {family_email}")
-            except Exception:
-                logger.exception(f"Error sending family invitation to {family_email}")
-
-        logger.info(f"Starting email sending thread for family_email={family_email}")
-        threading.Thread(target=_send, daemon=True).start()
+        # DEBUG: send email synchronously to catch any errors
+        try:
+            logger.info(f"[SYNC DEBUG] sending family invitation email to {family_email} with link {link}")
+            send_family_invitation_email(family_email, family_name, link)
+            logger.info(f"[SYNC DEBUG] family invitation email sent successfully to {family_email}")
+        except Exception:
+            logger.exception("[SYNC DEBUG] error sending family invitation email synchronously")
+            # Propagate error to trigger a 500 response
+            raise
+        # Return success response
         return jsonify({'message': 'Invitation sent successfully!'}), 200
     except Exception as e:
         logger.exception("invite_family failed with exception")
