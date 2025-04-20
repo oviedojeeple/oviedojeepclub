@@ -305,30 +305,38 @@ document.addEventListener('DOMContentLoaded', function () {
           alert("Please fill out both the family member's name and email.");
           return;
         }
-        // Prepare form data for the POST request
-        const formData = new URLSearchParams();
-        formData.append("family_name", familyNameValue);
-        formData.append("family_email", familyEmailValue);
-
+        // Prepare JSON payload for the POST request
+        const payload = {
+          family_name: familyNameValue,
+          family_email: familyEmailValue
+        };
         fetch('/invite_family', {
           method: 'POST',
-          body: formData,
+          credentials: 'same-origin',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
         })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(errData => Promise.reject(errData));
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.error) {
             alert("Error: " + data.error);
           } else {
             alert("Invitation sent successfully!");
-            // Optionally hide the invite form after sending
+            // Hide the invite form after sending
             familyInviteForm.style.display = "none";
           }
         })
         .catch(err => {
           console.error("Error sending invitation:", err);
+          alert("Failed to send invitation. " + (err.error || err));
         });
       });
     }
