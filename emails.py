@@ -96,3 +96,16 @@ def send_new_membership_email(recipient_email, recipient_name, receipt_url):
     )
     subject = "Welcome to The Oviedo Jeep Club!"
     return _send_email(subject, html_content, recipient_email, recipient_name)
+  
+def send_email_change_notification_email(recipient_email, recipient_name, old_email, new_email):
+    """Send a notification to the old email that the user has changed their address."""
+    logger.debug(f"send_email_change_notification_email called for {recipient_email}, old_email={old_email}, new_email={new_email}")
+    html_content = render_template(
+        'emails/email_change_notification.html',
+        recipient_name=recipient_name,
+        old_email=old_email,
+        new_email=new_email,
+        current_year=datetime.now().year
+    )
+    subject = "Your Oviedo Jeep Club email address has changed"
+    return _send_email(subject, html_content, recipient_email, recipient_name)

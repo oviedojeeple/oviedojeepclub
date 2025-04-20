@@ -186,11 +186,22 @@ def change_email():
     new_email = data.get('email')
     if not new_email:
         return jsonify({'error': 'Email is required'}), 400
+    # Capture old email for notification
+    old_email = session.get('user_data', {}).get('email')
     from user_services import update_b2c_user_email
+    from emails import send_email_change_notification_email
     try:
+        # Update email in B2C
         update_b2c_user_email(current_user.id, new_email)
+        # Notify old address
+        import threading
+        threading.Thread(
+            target=send_email_change_notification_email,
+            args=(old_email, current_user.name, old_email, new_email),
+            daemon=True
+        ).start()
     except Exception as e:
-        current_app.logger.exception("Failed to update email in B2C")
+        current_app.logger.exception("Failed to update email in B2C or send notification")
         return jsonify({'error': str(e)}), 500
     # Update session email and force logout to re-authenticate
     session['user_data']['email'] = new_email
