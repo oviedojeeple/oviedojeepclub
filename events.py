@@ -27,6 +27,19 @@ def blob_events():
         return jsonify(events)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@events_bp.route('/list_old_events', methods=['GET'])
+@login_required
+def list_old_events():
+    """
+    Return past (non-future) events from blob storage.
+    """
+    try:
+        # future_only=False to retrieve past and current events
+        events = get_events_from_blob(future_only=False)
+        return jsonify({'events': events})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @events_bp.route('/create_event', methods=['GET', 'POST'])
 @login_required
