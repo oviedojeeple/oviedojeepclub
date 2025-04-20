@@ -45,6 +45,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.length === 0) {
                     eventsContent.innerHTML = '<p>No events found.</p>';
                 } else {
+                    // Sort upcoming events so the soonest start_time appears first
+                    data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
                     data.forEach(event => {
                         const eventDiv = document.createElement('div');
                         eventDiv.classList.add('event');
