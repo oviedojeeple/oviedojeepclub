@@ -64,7 +64,14 @@ def invite_family():
     }
     invitations_table_client.upsert_entity(entity=entity)
     link = url_for('invitations.accept_invitation', token=token, _external=True)
-    send_family_invitation_email(family_email, family_name, link)
+    # Send invitation email asynchronously to avoid blocking
+    import threading, logging
+    def _send():
+        try:
+            send_family_invitation_email(family_email, family_name, link)
+        except Exception as e:
+            logging.error(f"Error sending family invitation to {family_email}: {e}")
+    threading.Thread(target=_send, daemon=True).start()
     return jsonify({'message': 'Invitation sent successfully!'}), 200
 
 @invitations_bp.route('/delete-data', methods=['GET', 'POST'])
