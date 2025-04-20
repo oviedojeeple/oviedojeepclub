@@ -108,6 +108,42 @@ def create_b2c_user(email, display_name, password,
     if upd.status_code not in (200, 204):
         raise RuntimeError(f"Error updating custom attributes: {upd.text}")
     return created
+   
+def update_b2c_user_email(user_id, new_email):
+    """
+    Update a user's email in Azure B2C: identities, mailNickname, userPrincipalName, and otherMails.
+    """
+    token = _acquire_graph_api_token()
+    if not token:
+        raise RuntimeError("Unable to acquire Graph API token")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    # Fetch existing identities and other mail properties
+    url = f"https://graph.microsoft.com/v1.0/users/{user_id}?$select=identities,mailNickname,otherMails"
+    resp = requests.get(url, headers=headers)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Error fetching user for email update: {resp.text}")
+    user_obj = resp.json()
+    identities = user_obj.get('identities', [])
+    # Update the email identity
+    for ident in identities:
+        if ident.get('signInType') == 'emailAddress':
+            ident['issuerAssignedId'] = new_email
+    # Compute new mailNickname and UPN
+    mail_nickname = new_email.replace('@', '_at_')
+    user_principal_name = f"{mail_nickname}@oviedojeepclub.onmicrosoft.com"
+    patch_body = {
+        'identities': identities,
+        'mailNickname': mail_nickname,
+        'userPrincipalName': user_principal_name,
+        'otherMails': [new_email]
+    }
+    patch_url = f"https://graph.microsoft.com/v1.0/users/{user_id}"
+    patch_resp = requests.patch(patch_url, headers=headers, json=patch_body)
+    if patch_resp.status_code not in (200, 204):
+        raise RuntimeError(f"Error updating user email: {patch_resp.text}")
   
 def check_membership_expiration():
     """

@@ -1,8 +1,8 @@
 """
 Authentication blueprint: routes for user login, logout, and session management using Azure AD B2C.
 """
-from flask import Blueprint, request, session, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user
+from flask import Blueprint, request, session, redirect, url_for, flash, jsonify, current_app
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from urllib.parse import quote
 import msal, requests, os
 from datetime import datetime
@@ -177,3 +177,22 @@ def logout():
     logout_user()
     session.clear()
     return redirect(f"{Config.AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri={Config.REDIRECT_URI}")
+
+@auth_bp.route('/profile/email', methods=['POST'])
+@login_required
+def change_email():
+    """AJAX endpoint to change the authenticated user's email."""
+    data = request.get_json(silent=True) or request.form
+    new_email = data.get('email')
+    if not new_email:
+        return jsonify({'error': 'Email is required'}), 400
+    from user_services import update_b2c_user_email
+    try:
+        update_b2c_user_email(current_user.id, new_email)
+    except Exception as e:
+        current_app.logger.exception("Failed to update email in B2C")
+        return jsonify({'error': str(e)}), 500
+    # Update session email and force logout to re-authenticate
+    session['user_data']['email'] = new_email
+    logout_user()
+    return jsonify({'success': True, 'email': new_email}), 200

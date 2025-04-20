@@ -341,4 +341,54 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   }
+
+  // Email change handling
+  const changeBtn = document.getElementById('change-email-btn');
+  const formDiv = document.getElementById('email-change-form');
+  const cancelBtn = document.getElementById('cancel-email-change');
+  const submitBtn = document.getElementById('submit-email-change');
+  const emailInput = document.getElementById('new-email');
+  const profileEmailCell = document.getElementById('profile-email-cell');
+
+  if (changeBtn && formDiv && cancelBtn && submitBtn && emailInput && profileEmailCell) {
+    changeBtn.addEventListener('click', () => {
+      changeBtn.style.display = 'none';
+      formDiv.style.display = 'block';
+    });
+    cancelBtn.addEventListener('click', () => {
+      formDiv.style.display = 'none';
+      changeBtn.style.display = 'inline-block';
+      emailInput.value = profileEmailCell.innerText;
+    });
+    submitBtn.addEventListener('click', () => {
+      const newEmail = emailInput.value;
+      if (!newEmail) {
+        alert('Please enter a valid email.');
+        return;
+      }
+      fetch('/profile/email', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({email: newEmail})
+      })
+      .then(res => {
+        if (!res.ok) return res.json().then(err => Promise.reject(err));
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) throw data;
+        profileEmailCell.innerText = data.email;
+        alert('Email updated. You will be logged out to re-authenticate.');
+        window.location.href = '/logout';
+      })
+      .catch(err => {
+        console.error('Error updating email:', err);
+        alert('Failed to update email. ' + (err.error || err));
+      });
+    });
+  }
 });

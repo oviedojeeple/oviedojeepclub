@@ -50,7 +50,7 @@
               <h2>Member Profile</h2>
               <table class="profile-details">
                 <tr><td>Name</td><td>{{ user.name }}</td></tr>
-                <tr><td>Email</td><td>{{ user.email }}</td></tr>
+                <tr><td>Email</td><td id="profile-email-cell">{{ user.email }}</td></tr>
                 <tr><td>Member</td><td>{{ user.membership_number }}</td></tr>
                 {% if user and user.job_title == 'OJC Board Member' %}
                   <tr><td>OJC Role</td><td>{{ user.job_title }}</td></tr>
@@ -68,6 +68,14 @@
                   <td>{{ user.member_expiration_date }}</td>
                 </tr>
               </table>
+              <div id="email-change" style="margin-top:1em;">
+                <button id="change-email-btn" type="button" class="nav-btn">Change Email</button>
+                <div id="email-change-form" style="display:none; margin-top:0.5em;">
+                  <input type="email" id="new-email" value="{{ user.email }}" required placeholder="New email">
+                  <button id="submit-email-change" class="nav-btn">Update</button>
+                  <button id="cancel-email-change" type="button" class="nav-btn">Cancel</button>
+                </div>
+              </div>
           </section>
           <section id="family-section">
             <h2>Family Member</h2>
