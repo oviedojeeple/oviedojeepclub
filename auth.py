@@ -110,12 +110,26 @@ def login():
 
 @auth_bp.route('/auth/callback')
 def auth_callback():
+    # Handle errors returned by Azure B2C (e.g., MFA failures)
+    error = request.args.get('error')
+    if error:
+        # Decode error description if present
+        from urllib.parse import unquote
+        desc = request.args.get('error_description', '')
+        try:
+            desc = unquote(desc)
+        except Exception:
+            pass
+        flash(f"Authentication error: {desc}", 'danger')
+        return redirect(url_for('auth.login'))
+    # Continue normal auth code flow
     flow = session.get("flow")
     if not flow:
         return redirect(url_for('auth.login'))
     result = _acquire_token_by_auth_code_flow(flow, request.args)
     if not result:
-        return "Login failed", 401
+        flash('Login failed. Please try again.', 'danger')
+        return redirect(url_for('auth.login'))
     user_info = result
     # Extract membership expiration info
     member_expiration_raw = user_info.get("extension_MemberExpirationDate")
