@@ -5,7 +5,7 @@ import uuid
 import json
 import requests
 from datetime import datetime
-from flask import Blueprint, jsonify, request, flash, redirect, url_for, session, Response
+from flask import Blueprint, jsonify, request, render_template, flash, redirect, url_for, session, Response
 from flask_login import login_required, current_user
 from config import Config
 from azure_services import blob_service_client
@@ -81,7 +81,8 @@ def create_event():
         success, msg = upload_events_to_blob(events)
         flash(msg, 'success' if success else 'danger')
         return redirect(url_for('index', section='events'))
-    return redirect(url_for('index'))
+    # GET: render the Create Event form
+    return render_template('create_event.html')
 
 @events_bp.route('/delete_event/<event_id>', methods=['POST'])
 @login_required
