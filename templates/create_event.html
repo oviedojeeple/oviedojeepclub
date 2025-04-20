@@ -27,7 +27,7 @@
 
   <nav class="menu">
     <button id="menu-home" class="nav-btn" onclick="window.location.href='{{ url_for('index', section='events') }}'">Home</button>
-    <button id="menu-logout" class="nav-btn" onclick="window.location.href='{{ url_for('logout') }}'">Logout</button>
+    <button id="menu-logout" class="nav-btn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
   </nav>
 
   <main>
@@ -43,7 +43,7 @@
         {% endif %}
       {% endwith %}
       <div id="join-section">
-        <form action="{{ url_for('create_event') }}" method="post" enctype="multipart/form-data">
+        <form action="{{ url_for('events.create_event') }}" method="post" enctype="multipart/form-data">
           <fieldset>
             <legend>Event Details</legend>
             <div class="form-row">
