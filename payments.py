@@ -20,7 +20,16 @@ def get_items():
 
 @payments_bp.route('/join', methods=['GET'])
 def join():
-    return render_template('index.html', application_id=Config.SQUARE_APPLICATION_ID)
+    """
+    Render the main index page with the payment form visible (Join flow).
+    """
+    # Pass the application ID, current user context, and flag to show the join section
+    return render_template(
+        'index.html',
+        application_id=Config.SQUARE_APPLICATION_ID,
+        user=current_user,
+        joinVisible=True
+    )
 
 @payments_bp.route('/pay', methods=['POST'])
 def pay():
