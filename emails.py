@@ -4,6 +4,9 @@ from datetime import datetime
 from flask import render_template, url_for
 from azure_services import email_client
 from config import Config
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Cache logo image base64
 _logo_b64 = None
@@ -17,6 +20,7 @@ def _get_logo_b64():
     return _logo_b64
 
 def _send_email(subject, html_content, recipient_email, recipient_name):
+    logger.debug(f"_send_email called with subject='{subject}', recipient_email='{recipient_email}', recipient_name='{recipient_name}'")
     message = {
         "senderAddress": Config.AZURE_COMM_CONNECTION_STRING_SENDER,
         "content": {"subject": subject, "html": html_content},
@@ -28,8 +32,16 @@ def _send_email(subject, html_content, recipient_email, recipient_name):
             "contentId": "ojc_logo"
         }]
     }
-    poller = email_client.begin_send(message)
-    return poller.result()
+    logger.debug("Invoking email_client.begin_send...")
+    try:
+        poller = email_client.begin_send(message)
+        logger.debug("Email client begin_send returned poller, awaiting result...")
+        result = poller.result()
+        logger.debug(f"Email sent to {recipient_email}, result: {result}")
+        return result
+    except Exception:
+        logger.exception(f"Error occurred while sending email to {recipient_email}")
+        raise
 
 def send_disablement_reminder_email(recipient_email, recipient_name, days_left):
     login_url = url_for('auth.login', _external=True)
@@ -56,6 +68,7 @@ def send_event_reminder_email(recipient_email, recipient_name, event, days_left)
     return _send_email(subject, html_content, recipient_email, recipient_name)
 
 def send_family_invitation_email(recipient_email, recipient_name, invitation_link):
+    logger.debug(f"send_family_invitation_email called with recipient_email={recipient_email}, recipient_name={recipient_name}, invitation_link={invitation_link}")
     html_content = render_template(
         'emails/family_invitation.html',
         recipient_name=recipient_name,

@@ -10,6 +10,9 @@ from user_services import create_b2c_user, _acquire_graph_api_token
 import requests
 from urllib.parse import quote
 from emails import send_family_invitation_email
+import logging
+
+logger = logging.getLogger(__name__)
 
 invitations_bp = Blueprint('invitations', __name__)
 
@@ -47,11 +50,13 @@ def accept_invitation():
 @login_required
 def invite_family():
     data = request.get_json() or request.form
+    logger.debug(f"invite_family called with family_email={data.get('family_email')}, family_name={data.get('family_name')}, membership_number={current_user.membership_number}")
     family_email = data.get('family_email')
     family_name = data.get('family_name')
     if not family_email or not family_name:
         return jsonify({'error': 'Missing family name or email'}), 400
     token = uuid.uuid4().hex
+    logger.debug(f"Generated invitation token {token} for family_email={family_email}")
     entity = {
         'PartitionKey': token,
         'RowKey': token,
@@ -63,14 +68,20 @@ def invite_family():
         'CreatedAt': _dt.utcnow().isoformat()
     }
     invitations_table_client.upsert_entity(entity=entity)
+    logger.debug(f"Invitation entity upserted with token {token} for {family_email}")
     link = url_for('invitations.accept_invitation', token=token, _external=True)
     # Send invitation email asynchronously to avoid blocking
-    import threading, logging
+    import threading
+
     def _send():
+        logger.debug(f"_send: starting to send family invitation email to {family_email} with link {link}")
         try:
             send_family_invitation_email(family_email, family_name, link)
-        except Exception as e:
-            logging.error(f"Error sending family invitation to {family_email}: {e}")
+            logger.debug(f"Family invitation email sent successfully to {family_email}")
+        except Exception:
+            logger.exception(f"Error sending family invitation to {family_email}")
+
+    logger.debug(f"Starting email sending thread for family_email={family_email}")
     threading.Thread(target=_send, daemon=True).start()
     return jsonify({'message': 'Invitation sent successfully!'}), 200
 
